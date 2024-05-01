@@ -4,14 +4,27 @@ This document is a reference guide for the POSIX Shell programming. It is a bit 
 
 ## Table of contents <!-- omit from toc -->
 
-- [Shebang line, script extension and default shell](#shebang-line-script-extension-and-default-shell)
-- [sh options](#sh-options)
-- [Check whether a command is available](#check-whether-a-command-is-available)
-- [Comments](#comments)
-- [Special characters, words, escapes and quotes](#special-characters-words-escapes-and-quotes)
-- [Variables](#variables)
-- [Local vs. environment variables](#local-vs-environment-variables)
-- [Built-in parameters](#built-in-parameters)
+- [Introduction](#introduction)
+  - [Script file extension](#script-file-extension)
+  - [Shebang line](#shebang-line)
+  - [Line ending](#line-ending)
+  - [Default shell](#default-shell)
+  - [Shells management](#shells-management)
+  - [sh options](#sh-options)
+- [Basic Syntax](#basic-syntax)
+  - [Comments](#comments)
+  - [Words and special characters](#words-and-special-characters)
+  - [Escaping](#escaping)
+  - [Quotes](#quotes)
+- [Parameters](#parameters)
+  - [Variables](#variables)
+  - [Single variable assignments](#single-variable-assignments)
+  - [Multiple variable assignments](#multiple-variable-assignments)
+  - [Optional single command following the variable assignments](#optional-single-command-following-the-variable-assignments)
+  - [Parameter expansion](#parameter-expansion)
+  - [Parameter expansion with default](#parameter-expansion-with-default)
+  - [Local vs. environment variables](#local-vs-environment-variables)
+  - [Built-in parameters](#built-in-parameters)
 - [echo vs printf](#echo-vs-printf)
 - [Commands](#commands)
 - [Background commands](#background-commands)
@@ -24,6 +37,7 @@ This document is a reference guide for the POSIX Shell programming. It is a bit 
 - [~username/"path with space"](#usernamepath-with-space)
 - [Pattern matching (globs or globbing)](#pattern-matching-globs-or-globbing)
 - [File commands](#file-commands)
+- [Check whether a command is available](#check-whether-a-command-is-available)
 - [eval command](#eval-command)
 - [Arrays](#arrays)
 - [Sourcing with . ./libraryname.sh](#sourcing-with--librarynamesh)
@@ -34,257 +48,350 @@ This document is a reference guide for the POSIX Shell programming. It is a bit 
 - [getopts](#getopts)
 
 
-## Shebang line, script extension and default shell
+## Introduction
 
-Shell executable scripts should have no extension (strongly preferred) 
-or a .sh extension and always start with a Shebang:
+### Script file extension
+
+Shell scripts should have no extension or a `.sh` extension.
+
+
+### Shebang line
+
+Shell executable scripts start with a Shebang line:
+
+```bash
 #!/bin/sh
+```
+
 or
+
+```bash
 #!/usr/bin/env sh
+```
 
-On Debian/Ubuntu #!/bin/sh points to dash which is POSIX compliant and 
-similar to the original Bourne shell. The default login shell is bash.
+### Line ending
 
-In MacOSX #!/bin/sh points to /bin/bash in sh compatibility mode, but
-in future it could be changed to dash. The default login shell is zsh.
+Shell scripts are text files which **must** use the Unix style line ending, that's a single line feed (LF).
 
-In Solaris 11 #!/bin/sh points to ksh93 which mostly conforms to POSIX. 
-The default login shell is bash.
 
-Shells management:
+### Default shell
+
+- On Debian/Ubuntu `#!/bin/sh` points to dash which is POSIX compliant and similar to the original Bourne shell. The default login shell is bash.
+
+- In MacOSX `#!/bin/sh` points to `/bin/bash` in sh compatibility mode. The default login shell is zsh.
+
+- In Solaris 11 `#!/bin/sh` points to ksh93 which mostly conforms to POSIX. The default login shell is bash.
+
+
+### Shells management
+
+```bash
 cat /etc/shells # see all installed shells
 echo $SHELL     # print default login shell
 chsh            # see/change default login shell (logout & log back in)
+```
 
 
-## sh options
+### sh options
 
-Run a script ignoring the Shebang:
-sh scriptname.sh args
+- Run a script ignoring the Shebang:
+  
+  ```bash
+  sh scriptname.sh args
+  ```
 
-Test a script (the following options can also be added to the Shebang):
-sh -n scriptname.sh args    # read commands but do not execute them,
-                            # used to check syntax errors
-sh -x scriptname.sh args    # trace each command to stderr
-sh -v scriptname.sh args    # print script source to stderr
+  - `-n` reads commands but do not execute them, used to check syntax errors.
+  - `-x` traces each command to stderr.
+  - `-v` prints script source to stderr.
 
-Start a new shell executing the given command. The provided args are 
-handed over to the new shell in $0, $1, $2, ...: 
-sh -c 'cmd "$1" "$2"' "arg0" "arg1" "arg2"
-Note: "arg0" is often set to -- or sh
+  Hint: the above options can also be added to the Shebang.
 
 
-## Check whether a command is available
+- Start a new shell executing the given command:
+  
+  ```bash
+  sh -c 'cmd "$1" "$2"' "arg0" "arg1" "arg2"
+  ```
 
-if command -v cmd >/dev/null 2>&1
-then
-    echo "cmd exists."
-else
-    echo "cmd not found."
-fi
+  - The provided args are handed over to the new shell in `$0`, `$1`, `$2`, ...
+  - `"arg0"` is often set to `--` or `sh`.
 
 
-## Comments
+## Basic Syntax
 
-If the current character is a #, then # itself and all subsequent 
-characters up to, but excluding, the next newline are discarded.
-The newline that ends the line is not considered part of the comment.
+### Comments
 
-Here-doc into null command to get a multi-line comment: 
+If the current character is a `#`, then `#` itself and all subsequent characters up to, but excluding, the next newline are discarded. The newline that ends the line is not considered part of the comment.
+
+Here-doc into null command to get a multi-line comment:
+```bash 
 : << 'MULTILINECOMMENT'
 This is a multi-line comment
 that spans several lines.
 MULTILINECOMMENT
+```
 
 
-## Special characters, words, escapes and quotes
+### Words and special characters
 
-A word is a sequence of characters considered a single unit by the shell. 
+- A word is a sequence of characters considered a single unit by the shell.
 
-The following special characters:
-| & ; ( ) < > space tab newline
-do separate words. It follows that spacing between words and those 
-characters doesn't matter. 
+- The following special characters do separate words:
 
-The following characters are also special:
-$  `  \  "  ' 
+  ```bash
+  |  &  ;  (  )  <  >  space  tab  newline
+  ```
 
-The reserved words:
-! { } case do done elif else esac fi for if in then until while
-must be delimited. 
+  It follows that spacing between words and those characters doesn't matter.
 
-For the unquoted case, escaping a single character with a backslash 
-makes it a literal character, and if the escaped character is a normal 
-character, the backslash is removed. The newline is an exception, if it 
-follows a backslash, the shell interprets this as line continuation (the 
-backslash and the newline are entirely removed and are not replaced by 
-any whitespace). 
+- The following characters are also special:
 
-Quotes are not used to define a string. They are used to disable 
-interpretation of special characters and to prevent reserved words from 
-being recognized as such. Quotes can span multiple lines. 
+  ```bash
+  $  `  \  "  '
+  ```
 
-A. Single-quotes are strong quotes, they prevent all characters from 
-   having special meanings. The only character that cannot occur within 
-   single-quotes is the single-quote itself:
-   'It'\''s done like that' 
+- The reserved words must be delimited:
 
-B. Double-quotes are weak quotes, they treat most characters as literal 
-   characters, but a few of them have a special meaning: 
-   1. Within double-quotes $ ${..} $(..) $((..)) `..` are interpreted 
-      like without quotes, but with the difference that word splitting 
-      and pathname globbing do not happen. Moreover the surrounding 
-      double-quotes do not conflict with eventual quotes inside of
-      ${..} $(..) $((..)) `..`
-   2. Within double-quotes the backslash becomes an escape character 
-      only if the character following is one of: 
-      $   `   "   \
-      Also here, like for the unquoted case, a newline following a 
-      backslash is a line continuation (both characters are removed) 
-
-Avoid confusion:   
-For certain commands and utilities, escaping a character has an 
-opposite effect, it enables a special meaning. For example \n and \t 
-are for printf a newline and a tab. 
+  ```bash
+  ! { } case do done elif else esac fi for if in then until while
+  ```
 
 
-## Variables
+### Escaping
 
-There is only one type of variable in sh: strings. Once a variable is 
-set, it can only be unset with the unset command. A space after the 
-equal sign performs an empty string assignment (also called a null 
-string). If you refer to a variable name that hasn't been assigned, 
-sh substitutes the empty string. 
-Note: sh strings cannot contain the NUL (ASCII 0) character.
+For the unquoted case, escaping a single character with a backslash makes it a literal character, and if the escaped character is a normal character, the backslash is removed.
 
-A variable name can be made of underscores, numbers and letters (the 
-first character of a variable name cannot be a number). By convention, 
-environment variables and internal shell variables are capitalized, 
-using lowercase variable names for local variables avoids conflicts. 
+The newline is an exception, if it follows a backslash, the shell interprets this as line continuation (the backslash and the newline are entirely removed and are not replaced by any whitespace).
 
-Single variable assignments:
-varempty=
-var1='The variable is called $var1'
-var2="and this is the value of it: $var1"
-var3=$var1              # $var1 is not subject to word splitting and
-                        # pathname globbing, thus double-quotes around
-                        # $var1 are not necessary, but they do not harm
-var4=*                  # the assignment is literal, no word splitting
-                        # and no pathname globbing happen at this point
+Avoid confusion, because for certain commands and utilities, escaping a character has an opposite effect, it enables a special meaning. For example `\n` and `\t` are for printf a newline and a tab. 
 
-Multiple variable assignments can be placed on one line and a single 
-command can follow the variable assignments. The variables will be made 
-accessible to a built-in/external command following and will only be 
-valid for that command and its children. On the contrary, if a special 
-built-in command follows, then the variables are not handed over, but 
-they will remain in effect after the special built-in completes:
+
+### Quotes
+
+Quotes are not used to define a string. They are used to disable interpretation of special characters and to prevent reserved words from being recognized as such. Quotes can span multiple lines.
+
+- Single-quotes are strong quotes, they prevent all characters from having special meanings. The only character that cannot occur within single-quotes is the single-quote itself:
+
+  ```bash
+  'It'\''s done like that'
+  ```
+
+- Double-quotes are weak quotes, they treat most characters as literal characters, but a few of them have a special meaning:
+
+  1. Within double-quotes ``$ ${..} $(..) `..` $((..))`` are interpreted like without quotes, but with the difference that word splitting and pathname globbing do not happen. Moreover the surrounding double-quotes do not conflict with eventual quotes inside of ``${..} $(..) `..` $((..))``.
+
+  2. Within double-quotes the backslash becomes an escape character only if the character following is one of ``$  `  "  \``.  
+     Also here, like for the unquoted case, a newline following a backslash is a line continuation (both characters are removed).
+
+
+## Parameters
+
+A parameter is an entity that stores values and is referenced by a name, a number or a special symbol. Parameters referenced by a name are called variables. Parameters referenced by a number are called positional parameters. Parameters referenced by a special symbol are auto-set parameters. 
+
+### Variables
+
+- There is only the **string** type variable in sh.
+- Once a variable is set, it can only be unset with the `unset` command.
+- If you refer to a variable name that hasn't been assigned, sh substitutes the empty string.
+- sh strings cannot contain the `NUL` (ASCII 0) character.
+- A variable name can be made of underscores, numbers and letters (the first character of a variable name cannot be a number).
+- By convention, environment variables and internal shell variables are **capitalized**.
+- Using **lowercase** variable names for local variables avoids conflicts.
+
+
+### Single variable assignments
+
+- Simple assignments:
+  
+  ```bash
+  var1='The variable is called $var1'
+  var2="and this is the value of it: $var1"
+  ```
+
+- Empty string assignment (also called a null string):
+
+  ```bash
+  varempty=
+  ```
+
+- Here `$var1` is not subject to word splitting and pathname globbing, thus double-quotes around `$var1` are not necessary, but they do not harm:
+
+  ```bash
+  var3=$var1
+  ```
+
+- The assignment here is literal, no word splitting and no pathname globbing happen:
+
+  ```bash
+  var4=*                        
+  ```
+
+
+### Multiple variable assignments
+
+Multiple variable assignments can be placed on one line:
+
+```bash
 var1=value1 var2=value2 
-var=5 echo $var         # not working because $var is interpreted 
-                        # before the execution of echo
-var=5 env               # that works because env is a child process 
-                        # printing the environment variables
-var=5 sh -c 'echo $var' # that works because we run echo inside the 
-                        # child process shell
-
-Parameter expansion (variable use):
-$var     "$var"         # double-quotes prevent the word splitting and 
-${var}   "${var}"       # the pathname globbing from happening
-
-Parameter expansion with default:
-${var:-word}            # if var is unset or empty, the expansion of 
-                        # word is substituted
-${var:=word}            # if var is unset or empty, the expansion of 
-                        # word is assigned to var. The value of var is 
-                        # then substituted
-Note: word is subject to tilde expansion, parameter expansion, command 
-      substitution and arithmetic expansion (but not subject to word 
-      splitting and pathname globbing). 
+```
 
 
-## Local vs. environment variables
+### Optional single command following the variable assignments
 
-A sh variable can be either a local variable or an environment variable. 
-They both work the same way; the only difference lies in what happens 
-when the script runs another program. Environment variables are passed 
-to subprocesses, local variables are not (by default vars are local). 
+- The variables will be made accessible to a built-in/external command following and will only be valid for that command and its children:
+
+  ```bash
+  var1=value1 var2=value2 env
+  ```
+
+- On the contrary, if a special built-in command follows, then the variables are not handed over, but they will remain in effect after the special built-in completes.
+
+- The `var=1 echo $var` code is not working because `$var` is interpreted before the execution of `echo`, the solution is a child shell:
+
+  ```bash
+  var=1 sh -c 'echo $var'
+  ```
+
+
+### Parameter expansion
+
+Parameter expansion in its simplest form just means variable use:
+
+```bash
+$var
+"$var"
+```
+
+or
+
+```bash
+${var}
+"${var}"
+```
+
+Note: double-quotes prevent the word splitting and the pathname globbing from happening.
+
+
+### Parameter expansion with default
+
+- If `var` is unset or empty, the expansion of word is substituted:
+
+  ```bash
+  ${var:-word}
+  ```
+
+- If `var` is unset or empty, the expansion of word is assigned to var. The value of var is then substituted:
+
+  ```bash
+  ${var:=word}
+  ```
+
+Note: `word` is subject to tilde expansion, parameter expansion, command substitution and arithmetic expansion (but not subject to word splitting and pathname globbing).
+
+
+### Local vs. environment variables
+
+A sh variable can be either a local variable or an environment variable. They both work the same way; the only difference lies in what happens when the script runs another program. Environment variables are passed to subprocesses, local variables are not (by default variables are local).
+
+```bash
 export VAR        # make VAR an environment variable
 export VAR=value  # assign and export in one line
 unset VAR         # this is the only way to unexport a variable
 set               # to view all variables
 export -p         # to view the exported variables
+```
 
 
-## Built-in parameters
+### Built-in parameters
 
-A parameter is an entity that stores values and is referenced by a name, 
-a number or a special symbol. Parameters referenced by a name are called 
-variables. Parameters referenced by a number are called positional 
-parameters. Parameters referenced by a special symbol are auto-set 
-parameters. 
+```bash
+$0             # Name of the shell script itself (not affected by shift)
+shift [n]      # Drop n positional parameters (default is 1)
+$1..$9         # Positional parameters (command line or function)
+${10}..        # More positional parameters
+$#             # The number of positional parameters without counting $0
+               # ($# gets updated with each shift call)
+$* and $@      # Positional parameters placed one after the other and 
+               # subject to word splitting
+"$*"           # Expands to "$1c$2c..." with c being the first char of IFS
+"$@"           # Expands to "$1" "$2" ...
+$?             # Return exit status of the last command or of a function
+$$             # Process id of the shell running the script, in a subshell 
+               # $$ is not updated, it returns the parent's PID
+$!             # Process id of the most recent background command
+```
 
-$0             Name of the shell script itself (not affected by shift)
-shift [n]      Drop n positional parameters (default is 1)
-$1..$9         Positional parameters (command line or function)
-${10}..        More positional parameters, not supported by the original 
-               Bourne shell, a workaround is to call shift like: 
-               arg1="$1";shift;arg2="$1";shift;..
-$#             The number of positional parameters without counting $0
-               ($# gets updated with each shift call)
-$* and $@      Positional parameters placed one after the other and 
-               subject to word splitting
-"$*"           Expands to "$1c$2c..." with c being the first char of IFS
-"$@"           Expands to "$1" "$2" ...
-$?             Return exit status of the last command or of a function
-$$             Process id of the shell running the script, in a subshell 
-               $$ is not updated, it returns the parent's PID
-$!             Process id of the most recent background command
-$IFS
-The chars of the IFS (Internal Field Separator) var are delimiters used 
-to perform the word splitting (also called field splitting): 
-- IFS whitespaces are any sequence of whitespace chars from the IFS var
-  a. IFS whitespaces are ignored at the beginning and end 
-  b. Adjacent IFS whitespaces are considered a single delimiter
-  c. One non-IFS whitespace with adjacent IFS whitespaces are also 
-     considered a single delimiter
-- IFS default is space + tab + newline (unset IFS to restore default)
-- If IFS is set to the empty var, no word splitting is happening 
-- To set IFS to a single newline: 
+**Internal Field Separator**
+
+The characters of the `IFS` var are delimiters used to perform the word splitting (also called field splitting).
+
+- IFS whitespaces are any sequence of whitespace characters from the IFS var:
+  - IFS whitespaces are ignored at the beginning and end.
+  - Adjacent IFS whitespaces are considered a single delimiter.
+  - One non-IFS whitespace with adjacent IFS whitespaces are also considered a single delimiter.
+- IFS default is space + tab + newline (`unset IFS` to restore default).
+- If IFS is set to the empty var, no word splitting is happening.
+- To set IFS to a single newline:
+  
+  ```bash
   nlx=$(printf '\nx') # x needed because $(..) strips trailing newlines
   IFS=${nlx%x}        # remove the above added x and assign to IFS
-
+  ```
 
 ## echo vs printf
 
-Nowadays, echo is only portable if flags and escape sequences are 
-omitted. Better to use printf which interprets its escape sequences 
-coherently across the different shell families. 
+Nowadays, echo is only portable if flags and escape sequences are omitted. Better to use printf which interprets its escape sequences coherently across the different shell families. 
 
-DO NOT use variables in format string:
-printf "Hi $var\n"   # BAD because $var could contain %s for example
+- Do not use variables in format string:
+  
+  ```bash
+  printf "Hi $var\n"
+  ```
 
-Number:
-printf '%02d' 9
+  - BAD because `$var` could contain `%s` for example.
 
-printf-escapes in format string:
-printf '\r\n\t\ddd'  # ddd is one, two or three-digit octal number
+- Number:
+  
+  ```bash
+  printf '%02d' 9
+  ```
 
-char <-> codepoint:
-printf "65 to char: \\$(printf '%03o' 65)\n"
-printf 'A to num: %d\n' "'A" # with leading-quote printf shows codepoint
+- printf-escapes in format string:
+  
+  ```bash
+  printf '\r\n\t\ddd'
+  ```
 
-printf-escapes are NOT interpreted by %s: 
-printf '%s' "$var"
+  - `ddd` is one, two or three-digit octal number.
 
-printf-escapes are interpreted by %b: 
-printf '%b' '\0ddd'  # ddd is zero, one, two or three-digit octal number
+- char <-> codepoint:
 
-Attention:
-- Note the difference between the two octal escape formats, to avoid 
-  problems with possible numbers following the escape sequence, always 
-  use the maximum number of digits for the given format variant 
-- Shell's %b format specifier behaves like the %s format specifier of 
-  the C printf. Remember that the %b format specifier of the C printf 
-  does something different, it prints a number in binary format 
+  ```bash
+  printf "65 to char: \\$(printf '%03o' 65)\n"
+  printf 'A to num: %d\n' "'A"
+  ```
+
+  - The leading-quote `'A` instructs printf to show the codepoint.
+
+- printf-escapes in `$var` are not interpreted by `%s`:
+
+  ```bash
+  printf '%s' "$var"
+  ```
+
+- printf-escapes are interpreted by `%b`:
+
+  ```bash
+  printf '%b' '\0ddd'
+  ```
+  
+  - `ddd` is zero, one, two or three-digit octal number.
+
+
+**Attention**
+
+- Note the difference between the two octal escape formats, to avoid problems with possible numbers following the escape sequence, always use the maximum number of digits for the given format variant.
+- Shell's `%b` format specifier behaves like the `%s` format specifier of the C printf. Remember that the `%b` format specifier of the C printf does something different, it prints a number in binary format.
 
 
 ## Commands
@@ -585,6 +692,18 @@ mytempdir=$(mktemp -d)
 
 : > 'path'
 Used to truncate a file to zero length
+
+
+## Check whether a command is available
+
+```bash
+if command -v cmd >/dev/null 2>&1
+then
+    echo "cmd exists."
+else
+    echo "cmd not found."
+fi
+```
 
 
 ## eval command
