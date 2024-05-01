@@ -1,5 +1,40 @@
-Shebang line, script extension and default shell
-------------------------------------------------
+# POSIX Shell Docs & Notes <!-- omit from toc -->
+
+This document is a reference guide for the POSIX Shell programming. It is a bit more than a simple cheat sheet, but it is not a learning book, you need to have some knowledge and experience about Shell programming to understand these notes.
+
+## Table of contents <!-- omit from toc -->
+
+- [Shebang line, script extension and default shell](#shebang-line-script-extension-and-default-shell)
+- [sh options](#sh-options)
+- [Check whether a command is available](#check-whether-a-command-is-available)
+- [Comments](#comments)
+- [Special characters, words, escapes and quotes](#special-characters-words-escapes-and-quotes)
+- [Variables](#variables)
+- [Local vs. environment variables](#local-vs-environment-variables)
+- [Built-in parameters](#built-in-parameters)
+- [echo vs printf](#echo-vs-printf)
+- [Commands](#commands)
+- [Background commands](#background-commands)
+- [wait command](#wait-command)
+- [Flow control](#flow-control)
+- [: null command](#-null-command)
+- [test command](#test-command)
+- [Shell arithmetic](#shell-arithmetic)
+- [Functions](#functions)
+- [~username/"path with space"](#usernamepath-with-space)
+- [Pattern matching (globs or globbing)](#pattern-matching-globs-or-globbing)
+- [File commands](#file-commands)
+- [eval command](#eval-command)
+- [Arrays](#arrays)
+- [Sourcing with . ./libraryname.sh](#sourcing-with--librarynamesh)
+- [exec command](#exec-command)
+- [trap command](#trap-command)
+- [Strings manipulation](#strings-manipulation)
+- [Lines manipulation](#lines-manipulation)
+- [getopts](#getopts)
+
+
+## Shebang line, script extension and default shell
 
 Shell executable scripts should have no extension (strongly preferred) 
 or a .sh extension and always start with a Shebang:
@@ -22,8 +57,7 @@ echo $SHELL     # print default login shell
 chsh            # see/change default login shell (logout & log back in)
 
 
-sh options
-----------
+## sh options
 
 Run a script ignoring the Shebang:
 sh scriptname.sh args
@@ -40,8 +74,7 @@ sh -c 'cmd "$1" "$2"' "arg0" "arg1" "arg2"
 Note: "arg0" is often set to -- or sh
 
 
-Check whether a command is available
-------------------------------------
+## Check whether a command is available
 
 if command -v cmd >/dev/null 2>&1
 then
@@ -51,8 +84,7 @@ else
 fi
 
 
-Comments
---------
+## Comments
 
 If the current character is a #, then # itself and all subsequent 
 characters up to, but excluding, the next newline are discarded.
@@ -65,8 +97,7 @@ that spans several lines.
 MULTILINECOMMENT
 
 
-Special characters, words, escapes and quotes
----------------------------------------------
+## Special characters, words, escapes and quotes
 
 A word is a sequence of characters considered a single unit by the shell. 
 
@@ -117,8 +148,7 @@ opposite effect, it enables a special meaning. For example \n and \t
 are for printf a newline and a tab. 
 
 
-Variables
----------
+## Variables
 
 There is only one type of variable in sh: strings. Once a variable is 
 set, it can only be unset with the unset command. A space after the 
@@ -171,8 +201,7 @@ Note: word is subject to tilde expansion, parameter expansion, command
       splitting and pathname globbing). 
 
 
-Local vs. environment variables
--------------------------------
+## Local vs. environment variables
 
 A sh variable can be either a local variable or an environment variable. 
 They both work the same way; the only difference lies in what happens 
@@ -185,8 +214,7 @@ set               # to view all variables
 export -p         # to view the exported variables
 
 
-Built-in parameters
--------------------
+## Built-in parameters
 
 A parameter is an entity that stores values and is referenced by a name, 
 a number or a special symbol. Parameters referenced by a name are called 
@@ -225,8 +253,7 @@ to perform the word splitting (also called field splitting):
   IFS=${nlx%x}        # remove the above added x and assign to IFS
 
 
-echo vs printf
---------------
+## echo vs printf
 
 Nowadays, echo is only portable if flags and escape sequences are 
 omitted. Better to use printf which interprets its escape sequences 
@@ -260,8 +287,7 @@ Attention:
   does something different, it prints a number in binary format 
 
 
-Commands
---------
+## Commands
 
 - A simple command is a sequence of optional variable assignments 
   followed by blank-separated words and redirections (in simple commands 
@@ -345,8 +371,7 @@ part of a pipeline or can also be redirected:
   For example: { cmd1; cmd2; } > file.txt
 
 
-Background commands
--------------------
+## Background commands
 
 When executing a command the shell normally creates a new process and 
 waits for it to finish. A command may be run without waiting for it to 
@@ -360,8 +385,7 @@ kill %n         # kill the given job
 Note: for background commands the stdin is detached (not for subshells). 
 
 
-wait command
-------------
+## wait command
 
 wait [PIDs]
 
@@ -374,8 +398,7 @@ wait [PIDs]
   kill -0 $pid
 
 
-Flow control
-------------
+## Flow control
 
 list+words must be terminated by ; or newline:
 if list then list elif list then list else list fi
@@ -391,8 +414,7 @@ case word in pattern | pattern ) list;; pattern | pattern ) list;; esac
 Note: pattern can contain unquoted globs used to match the given word
 
 
-: null command
---------------
+## : null command
 
 if who | grep -q jane
 then
@@ -404,8 +426,7 @@ Note: both the null command and true return 0, for code clarity a good
       habit is to use : for empty commands and true in conditions.
 
 
-test command
-------------
+## test command
 
 [ and test are almost the same command, the only difference is that [ 
 expects its last argument to be ]
@@ -451,8 +472,7 @@ multiple tests in braces like:
 [ -e file1 ] &&  { [ -x file2 ] || [ -x file3 ]; }
 
 
-Shell arithmetic
-----------------
+## Shell arithmetic
 
 In the original Bourne shell, arithmetic is done using the expr command:
 result=$(expr $var1 + 2)
@@ -474,8 +494,7 @@ var2=6.0
 echo "$var1 + $var2" | bc
 
 
-Functions
----------
+## Functions
 
 myfunc1()            # function definitions must happen before their use
 {
@@ -500,8 +519,7 @@ echo $result
 - echo in function does write to stdout, that can be caught with $(..) 
 
 
-~username/"path with space"
----------------------------
+## ~username/"path with space"
 
 1. A word that begins with an unquoted tilde + an optional unquoted 
    username will expand to the home directory. If a path follows, then 
@@ -514,8 +532,7 @@ echo $result
    to prevent it being altered by word splitting and pathname globbing 
 
 
-Pattern matching (globs or globbing)
-------------------------------------
+## Pattern matching (globs or globbing)
 
 Unquoted globs meaning:
 *              Matches 0 or more characters
@@ -546,8 +563,7 @@ Hint:
 Use ./* instead of * so filenames with dashes won't become options!
 
 
-File commands
--------------
+## File commands
 
 basename 'path'
 Trailing slash is trimmed from the given path and then the rightmost 
@@ -571,8 +587,7 @@ mytempdir=$(mktemp -d)
 Used to truncate a file to zero length
 
 
-eval command
-------------
+## eval command
 
 eval [args]
 In simple terms with eval a given input is parsed twice. In detail, eval 
@@ -581,8 +596,7 @@ and then it instructs the shell to execute the result. The exit status
 of eval is the exit status of what has been run by the shell. 
 
 
-Arrays
-------
+## Arrays
 
 In POSIX there is no native array type, but there are different 
 possibilities. To be coherent with the positional parameters and with 
@@ -628,8 +642,7 @@ do
 done
 
 
-Sourcing with . ./libraryname.sh
---------------------------------
+## Sourcing with . ./libraryname.sh
 
 When a script is included with the dot command, it runs within the 
 existing shell. Any variables created or modified by the script will 
@@ -645,8 +658,7 @@ Convention: libraries should have a .sh extension and should not be
 Note: source is a synonym for the dot command in bash, but not in POSIX. 
 
 
-exec command
-------------
+## exec command
 
 exec [cmd [args]] [redirections]
 
@@ -663,8 +675,7 @@ exec 7<&0       # duplicate stdin as fd 7
 exec 7<&-       # close fd 7 to free it for other processes to use
 
 
-trap command
-------------
+## trap command
 
 trap action signals
 
@@ -691,8 +702,7 @@ Attention: the default trap actions usually restore the tty to a sane
            to revert tty changes in them. 
 
 
-Strings manipulation
---------------------
+## Strings manipulation
 
 Count the chars:
 wc -m              # -c counts the bytes
@@ -820,8 +830,7 @@ Note: don't confuse the "POSIX character class" with what is normally
       expression" like [x-z[:digit:]]
 
 
-Lines manipulation
-------------------
+## Lines manipulation
 
 Sort the lines of a text:
 sort  # -n numerically, -u suppress duplicated lines, -r reverse sort
@@ -892,8 +901,7 @@ done < "$filename"
   is necessary to make sure that the last line is gotten 
 
 
-getopts
--------
+## getopts
 
 According to POSIX, options are single alphanumeric characters preceded 
 by a hyphen, they can have an optional option-argument following it 
