@@ -1,22 +1,22 @@
 # POSIX Shell Docs & Notes <!-- omit from toc -->
 
-This document is a reference guide for the POSIX Shell programming. It is a bit more than a simple cheat sheet, but it is not a learning book, you need to have some knowledge and experience about Shell programming to understand these notes.
+This document is a reference guide for POSIX Shell programming. It is a bit more than a simple cheat sheet, but it is not a learning book, you need to have some knowledge and experience about Shell programming to understand these notes.
 
 ## Table of contents <!-- omit from toc -->
 
 - [Introduction](#introduction)
-  - [Script file extension](#script-file-extension)
+  - [File extension and line ending](#file-extension-and-line-ending)
   - [Shebang line](#shebang-line)
-  - [Line ending](#line-ending)
-  - [Default shell](#default-shell)
-  - [Shells management](#shells-management)
+  - [Default shell and management](#default-shell-and-management)
   - [sh options](#sh-options)
-- [Basic Syntax](#basic-syntax)
+  - [echo vs printf](#echo-vs-printf)
+- [Syntax](#syntax)
   - [Comments](#comments)
   - [Words and special characters](#words-and-special-characters)
   - [Escaping](#escaping)
   - [Quotes](#quotes)
 - [Parameters](#parameters)
+  - [Parameter definition](#parameter-definition)
   - [Variables](#variables)
   - [Single variable assignments](#single-variable-assignments)
   - [Multiple variable assignments](#multiple-variable-assignments)
@@ -25,34 +25,40 @@ This document is a reference guide for the POSIX Shell programming. It is a bit 
   - [Parameter expansion with default](#parameter-expansion-with-default)
   - [Local vs. environment variables](#local-vs-environment-variables)
   - [Built-in parameters](#built-in-parameters)
-- [echo vs printf](#echo-vs-printf)
 - [Commands](#commands)
-- [Background commands](#background-commands)
-- [wait command](#wait-command)
+  - [Simple command to list](#simple-command-to-list)
+  - [Compound commands](#compound-commands)
+  - [Background commands](#background-commands)
+  - [wait command](#wait-command)
 - [Flow control](#flow-control)
-- [: null command](#-null-command)
-- [test command](#test-command)
+  - [if, while, until, for and case](#if-while-until-for-and-case)
+  - [: null command](#-null-command)
+  - [test command](#test-command)
 - [Shell arithmetic](#shell-arithmetic)
 - [Functions](#functions)
-- [~username/"path with space"](#usernamepath-with-space)
+- [Tilde expansion](#tilde-expansion)
 - [Pattern matching (globs or globbing)](#pattern-matching-globs-or-globbing)
-- [File commands](#file-commands)
-- [Check whether a command is available](#check-whether-a-command-is-available)
-- [eval command](#eval-command)
-- [Arrays](#arrays)
-- [Sourcing with . ./libraryname.sh](#sourcing-with--librarynamesh)
-- [exec command](#exec-command)
-- [trap command](#trap-command)
-- [Strings manipulation](#strings-manipulation)
-- [Lines manipulation](#lines-manipulation)
-- [getopts](#getopts)
+- [Advanced](#advanced)
+  - [Command available?](#command-available)
+  - [eval command](#eval-command)
+  - [Arrays](#arrays)
+  - [Sourcing with . ./libraryname.sh](#sourcing-with--librarynamesh)
+  - [exec command](#exec-command)
+  - [trap command](#trap-command)
+- [Manipulation](#manipulation)
+  - [Files](#files)
+  - [Strings](#strings)
+  - [Lines](#lines)
+  - [getopts](#getopts)
 
 
 ## Introduction
 
-### Script file extension
+### File extension and line ending
 
-Shell scripts should have no extension or a `.sh` extension.
+- Shell scripts should have no extension or a `.sh` extension.
+
+- Shell scripts are text files which **must** use the Unix style line ending, that's a single line feed (LF).
 
 
 ### Shebang line
@@ -69,12 +75,8 @@ or
 #!/usr/bin/env sh
 ```
 
-### Line ending
 
-Shell scripts are text files which **must** use the Unix style line ending, that's a single line feed (LF).
-
-
-### Default shell
+### Default shell and management
 
 - On Debian/Ubuntu `#!/bin/sh` points to dash which is POSIX compliant and similar to the original Bourne shell. The default login shell is bash.
 
@@ -83,12 +85,10 @@ Shell scripts are text files which **must** use the Unix style line ending, that
 - In Solaris 11 `#!/bin/sh` points to ksh93 which mostly conforms to POSIX. The default login shell is bash.
 
 
-### Shells management
-
 ```bash
-cat /etc/shells # see all installed shells
-echo $SHELL     # print default login shell
-chsh            # see/change default login shell (logout & log back in)
+cat /etc/shells   # see all installed shells
+echo $SHELL       # print default login shell
+chsh              # see/change default login shell (logout & log back in)
 ```
 
 
@@ -117,7 +117,63 @@ chsh            # see/change default login shell (logout & log back in)
   - `"arg0"` is often set to `--` or `sh`.
 
 
-## Basic Syntax
+### echo vs printf
+
+Nowadays, echo is only portable if flags and escape sequences are omitted. Better to use printf which interprets its escape sequences coherently across the different shell families. 
+
+- Do not use variables in format string:
+  
+  ```bash
+  printf "Hi $var\n"
+  ```
+
+  - BAD because `$var` could contain `%s` for example.
+
+- Number:
+  
+  ```bash
+  printf '%02d' 9
+  ```
+
+- printf-escapes in format string:
+  
+  ```bash
+  printf '\r\n\t\ddd'
+  ```
+
+  - `ddd` is one, two or three-digit octal number.
+
+- char <-> codepoint:
+
+  ```bash
+  printf "65 to char: \\$(printf '%03o' 65)\n"
+  printf 'A to num: %d\n' "'A"
+  ```
+
+  - The leading-quote `'A` instructs printf to show the codepoint.
+
+- printf-escapes in `$var` are not interpreted by `%s`:
+
+  ```bash
+  printf '%s' "$var"
+  ```
+
+- printf-escapes are interpreted by `%b`:
+
+  ```bash
+  printf '%b' '\0ddd'
+  ```
+  
+  - `ddd` is zero, one, two or three-digit octal number.
+
+
+**Attention**
+
+- Note the difference between the two octal escape formats, to avoid problems with possible numbers following the escape sequence, always use the maximum number of digits for the given format variant.
+- Shell's `%b` format specifier behaves like the `%s` format specifier of the C printf. Remember that the `%b` format specifier of the C printf does something different, it prints a number in binary format.
+
+
+## Syntax
 
 ### Comments
 
@@ -185,6 +241,8 @@ Quotes are not used to define a string. They are used to disable interpretation 
 
 
 ## Parameters
+
+### Parameter definition
 
 A parameter is an entity that stores values and is referenced by a name, a number or a special symbol. Parameters referenced by a name are called variables. Parameters referenced by a number are called positional parameters. Parameters referenced by a special symbol are auto-set parameters. 
 
@@ -305,20 +363,20 @@ export -p         # to view the exported variables
 ### Built-in parameters
 
 ```bash
-$0             # Name of the shell script itself (not affected by shift)
-shift [n]      # Drop n positional parameters (default is 1)
-$1..$9         # Positional parameters (command line or function)
-${10}..        # More positional parameters
-$#             # The number of positional parameters without counting $0
-               # ($# gets updated with each shift call)
-$* and $@      # Positional parameters placed one after the other and 
-               # subject to word splitting
-"$*"           # Expands to "$1c$2c..." with c being the first char of IFS
-"$@"           # Expands to "$1" "$2" ...
-$?             # Return exit status of the last command or of a function
-$$             # Process id of the shell running the script, in a subshell 
-               # $$ is not updated, it returns the parent's PID
-$!             # Process id of the most recent background command
+$0                # Name of the shell script itself (not affected by shift)
+shift [n]         # Drop n positional parameters (default is 1)
+$1..$9            # Positional parameters (command line or function)
+${10}..           # More positional parameters
+$#                # The number of positional parameters without counting $0
+                  # ($# gets updated with each shift call)
+$* and $@         # Positional parameters placed one after the other and 
+                  # subject to word splitting
+"$*"              # Expands to "$1c$2c..." with c being the first char of IFS
+"$@"              # Expands to "$1" "$2" ...
+$?                # Return exit status of the last command or of a function
+$$                # Process id of the shell running the script, in a subshell 
+                  # $$ is not updated, it returns the parent's PID
+$!                # Process id of the most recent background command
 ```
 
 **Internal Field Separator**
@@ -334,277 +392,276 @@ The characters of the `IFS` var are delimiters used to perform the word splittin
 - To set IFS to a single newline:
   
   ```bash
-  nlx=$(printf '\nx') # x needed because $(..) strips trailing newlines
-  IFS=${nlx%x}        # remove the above added x and assign to IFS
+  nlx=$(printf '\nx')  # x needed because $(..) strips trailing newlines
+  IFS=${nlx%x}         # remove the above added x and assign to IFS
   ```
-
-## echo vs printf
-
-Nowadays, echo is only portable if flags and escape sequences are omitted. Better to use printf which interprets its escape sequences coherently across the different shell families. 
-
-- Do not use variables in format string:
-  
-  ```bash
-  printf "Hi $var\n"
-  ```
-
-  - BAD because `$var` could contain `%s` for example.
-
-- Number:
-  
-  ```bash
-  printf '%02d' 9
-  ```
-
-- printf-escapes in format string:
-  
-  ```bash
-  printf '\r\n\t\ddd'
-  ```
-
-  - `ddd` is one, two or three-digit octal number.
-
-- char <-> codepoint:
-
-  ```bash
-  printf "65 to char: \\$(printf '%03o' 65)\n"
-  printf 'A to num: %d\n' "'A"
-  ```
-
-  - The leading-quote `'A` instructs printf to show the codepoint.
-
-- printf-escapes in `$var` are not interpreted by `%s`:
-
-  ```bash
-  printf '%s' "$var"
-  ```
-
-- printf-escapes are interpreted by `%b`:
-
-  ```bash
-  printf '%b' '\0ddd'
-  ```
-  
-  - `ddd` is zero, one, two or three-digit octal number.
-
-
-**Attention**
-
-- Note the difference between the two octal escape formats, to avoid problems with possible numbers following the escape sequence, always use the maximum number of digits for the given format variant.
-- Shell's `%b` format specifier behaves like the `%s` format specifier of the C printf. Remember that the `%b` format specifier of the C printf does something different, it prints a number in binary format.
-
 
 ## Commands
 
-- A simple command is a sequence of optional variable assignments 
-  followed by blank-separated words and redirections (in simple commands 
-  the redirections can also be placed at the beginning) 
-- Pipelines are commands combined by pipes that connect the output of 
-  the preceding command with the input of the next command 
-- A list is a series of pipelines separated by  &  ;  &&  || 
-  and terminated by  &  ;  newline 
-- If a command returns a zero exit status, the condition is true, 
-  otherwise, it is false. By calling the exit [n] command (n defaults to 
-  zero) a script exits with code n. There are two programs called true 
-  and false, they return respectively with a zero exit status and with a 
-  non-zero exit status 
-- The exit status of a series of commands is that of the last simple 
-  command executed
-- The exit status of a variable assignment alone is that of the last 
-  substituted command, or zero if there are no command substitutions
+### Simple command to list
 
-Precedence: 
-highest         redirection operators
-high            |
-medium          && || (both carry equal precedence)
-lowest          ; &   (both carry equal precedence)
+- A simple command is a sequence of optional variable assignments followed by blank-separated words and redirections (in simple commands the redirections can also be placed at the beginning).
+- Pipelines are commands combined by pipes that connect the output of the preceding command with the input of the next command.
+- A list is a series of pipelines separated by  `&  ;  &&  ||` and terminated by `&  ;  newline`.
+- If a command returns a zero exit status, the condition is true, otherwise, it is false. By calling `exit n` (n is optional and defaults to zero) a script exits with code n. There are two programs called `true` and `false`, they return respectively with a zero exit status and with a non-zero exit status.
+- The exit status of a series of commands is that of the last simple command executed.
+- The exit status of a variable assignment alone is that of the last substituted command, or zero if there are no command substitutions.
 
-! pipeline      Negates the exit code of the whole pipeline. Being a 
-                reserved word, it must be separated by a space. It 
-                returns an exit status of 0 if the pipeline exited 
-                non-zero, and an exit status of 1, if the pipeline 
-                exited zero (supported in POSIX shells, not in the 
-                original Bourne shell)
-cmd1 | cmd2     Output of cmd1 is piped into cmd2
-[n]> file       Output from n is redirected to file, by default 
-                n is 1 (stdout), in that case the 1 can be omitted
->/dev/null 2>&1 1 goes to null and 2 (stderr) goes to what 1 refers to 
-                at this moment (that's null). The order of these two 
-                redirections matters here 
-[n]>> file      Output from n appended to file 
-                (n can be omitted if it is 1)
-[n]< file       Input from file into n, by default n is 0 (stdin), 
-                in that case the 0 can be omitted
-[n]<< ENDTXT    Redirect into n from current script point until ENDTXT 
-                $ ${..} $(..) $((..)) are interpreted
-                (n can be omitted if it is 0)
-[n]<< 'ENDTXT'  Redirect into n from current script point until ENDTXT 
-                $ ${..} $(..) $((..)) are NOT interpreted
-                (n can be omitted if it is 0)
-cmd1 && cmd2    Execute cmd1. Then, if it exited with a zero exit status 
-                (true), execute cmd2
-cmd1 || cmd2    Execute cmd1. Then, if it exited with a non-zero exit 
-                status (false), execute cmd2
-cmd1; cmd2      Do cmd1 and then cmd2
-cmd1 & cmd2     Do cmd1, start cmd2 without waiting for cmd1 to finish
-                (see Background commands)
-{ cmds; }       Group cmds, the last semicolon is required because cmds
-                is a list, and the first curly bracket must be separated 
-                by a space because it is a reserved word. Often used to 
-                change precedence 
-(cmds)          Run cmds in a subshell, blocks until subshell is done
-$(cmds)         Command substitution runs cmds in a subshell, the output 
-                replaces $(cmds). $(cmds) is supported in POSIX shells 
-                and must be preferred over the obsolete `cmds` syntax 
-                which has nesting problems 
-                Note: trailing newlines are removed from command output 
+```bash
+! pipeline      # Negates the exit code of the whole pipeline. Being a 
+                # reserved word, it must be separated by a space. It 
+                # returns an exit status of 0 if the pipeline exited 
+                # non-zero, and an exit status of 1, if the pipeline 
+                # exited zero
+cmd1 | cmd2     # Output of cmd1 is piped into cmd2
+[n]> file       # Output from n is redirected to file, by default 
+                # n is 1 (stdout), in that case the 1 can be omitted
+>/dev/null 2>&1 # 1 goes to null and 2 (stderr) goes to what 1 refers to 
+                # at this moment (that's null). The order of these two 
+                # redirections matters here 
+[n]>> file      # Output from n appended to file 
+                # (n can be omitted if it is 1)
+[n]< file       # Input from file into n, by default n is 0 (stdin), 
+                # in that case the 0 can be omitted
+[n]<< ENDTXT    # Redirect into n from current script point until ENDTXT 
+                # $ ${..} $(..) $((..)) are interpreted
+                # (n can be omitted if it is 0)
+[n]<< 'ENDTXT'  # Redirect into n from current script point until ENDTXT 
+                # $ ${..} $(..) $((..)) are NOT interpreted
+                # (n can be omitted if it is 0)
+cmd1 && cmd2    # Execute cmd1. Then, if it exited with a zero exit status 
+                # (true), execute cmd2
+cmd1 || cmd2    # Execute cmd1. Then, if it exited with a non-zero exit 
+                # status (false), execute cmd2
+cmd1; cmd2      # Do cmd1 and then cmd2
+cmd1 & cmd2     # Do cmd1, start cmd2 without waiting for cmd1 to finish
+                # (see Background commands)
+{ cmds; }       # Group cmds, the last semicolon is required because cmds
+                # is a list, and the first curly bracket must be separated 
+                # by a space because it is a reserved word. Often used to 
+                # change precedence 
+(cmds)          # Run cmds in a subshell, blocks until subshell is done
+$(cmds)         # Command substitution runs cmds in a subshell, the output 
+                # replaces $(cmds). $(cmds) is supported in POSIX shells 
+                # and must be preferred over the obsolete `cmds` syntax 
+                # which has nesting problems 
+                # Note: trailing newlines are removed from command output 
+```
 
-Signal 13 termination:
-It means that something is written to a pipe, but nothing is read. It 
-often happens when a head command already got all the input it wants 
-and closed its input pipe, while the source command is still writing 
-into its output pipe. To hide the message, add to the source command: 
-2>/dev/null
+**Precedence from highest to lowest:**
 
-Compound commands, like command groups, while loops or functions, can be 
-part of a pipeline or can also be redirected:
-- The pipe operator is placed before the compound command or at the end 
-  on the same line as the terminator. In POSIX shells each compound 
-  command of a pipeline runs in a separate subshell. 
-  For example: cat file.txt | while read l; do printf '%s\n' "$l"; done
-- Redirections have to be placed at the end on the same line as the 
-  terminator. Each redirection is applied to all the commands within the 
-  compound command that do not explicitly override that redirection. 
-  For example: { cmd1; cmd2; } > file.txt
+1. Redirection operators
+2. `|`
+3. `&&  ||` (both carry equal precedence)
+4. `;  &`   (both carry equal precedence)
+
+Hint: a signal 13 termination means that something is written to a pipe, but nothing is read. It often happens when a `head` command already got all the input it wants and closed its input pipe, while the source command is still writing into its output pipe. To hide the message, add `2>/dev/null` to the source command.
 
 
-## Background commands
+### Compound commands
 
-When executing a command the shell normally creates a new process and 
-waits for it to finish. A command may be run without waiting for it to 
-finish by appending a & like: sleep 1000 & 
-To put a running job into background stopping it press: Ctrl+Z 
-A job is a process that the shell manages: 
-jobs            # to see the running background jobs with their job num 
-fg %n           # move the job to foreground (re-started if stopped)
-bg %n           # re-start a stopped job in background
-kill %n         # kill the given job
+Command groups, while loops or functions can be part of a pipeline or can also be redirected:
+
+- The pipe operator is placed before the compound command or at the end on the same line as the terminator. In POSIX shells each compound command of a pipeline runs in a separate subshell. For example:  
+  `cat file.txt | while read l; do printf '%s\n' "$l"; done`
+- Redirections have to be placed at the end on the same line as the terminator. Each redirection is applied to all the commands within the compound command that do not explicitly override that redirection. For example:  
+  `{ cmd1; cmd2; } > file.txt`
+
+
+### Background commands
+
+When executing a command the shell normally creates a new process and waits for it to finish. A command may be run without waiting for it to finish by appending a `&` like:
+
+```bash
+sleep 1000 &
+```
+ 
+A job is a process that the shell manages:
+
+- `jobs` to see the running background jobs with their job number. 
+- `fg %n` to move the job to foreground (re-started if stopped).
+- `bg %n` re-starts a stopped background job.
+- `Ctrl+Z` to put a running job into background stopping it.
+- `kill %n` kills the given job.
+
 Note: for background commands the stdin is detached (not for subshells). 
 
 
-## wait command
+### wait command
 
+```bash
 wait [PIDs]
+```
 
-- Without arguments it waits until all child processes terminate 
-  (wait exits with a zero exit status)
-- If PIDs are given, it waits until all listed processes have terminated 
-  (wait exits with the exit status of the last listed PID)
-  wait works only for shell child processes, but it's possible to use 
-  kill to poll for the existence of an arbitrary process:
-  kill -0 $pid
+- Without arguments it waits until all child processes terminate (wait exits with a zero exit status).
+- If PIDs are given, it waits until all listed processes have terminate (wait exits with the exit status of the last listed PID).
+ 
+Hint: `wait` only works for shell child processes, but it's possible to use `kill` to poll for the existence of an arbitrary process: `kill -0 $pid`.
 
 
 ## Flow control
 
-list+words must be terminated by ; or newline:
-if list then list elif list then list else list fi
-while list do list done
-until list do list done               # like while but test is inverted
-for varname in words do list done
-Notes:
-- for varname in "$@" has a short form: for varname
-- while, until or for may contain break and continue
+### if, while, until, for and case
 
-word+pattern not subject to word splitting and pathname globbing:
-case word in pattern | pattern ) list;; pattern | pattern ) list;; esac
-Note: pattern can contain unquoted globs used to match the given word
+- if-condition:
+  
+  ```bash
+  if list then list elif list then list else list fi
+  ```
+
+  - `list` must be terminated by `;` or a newline.
 
 
-## : null command
+- while-loop: 
 
+  ```bash
+  while list do list done
+  ```
+
+  - `list` must be terminated by `;` or a newline.
+  - May contain `break` and `continue`.
+
+
+- until-loop (like while but test is inverted):
+  
+  ```bash
+  until list do list done
+  ```
+
+  - `list` must be terminated by `;` or a newline.
+  - May contain `break` and `continue`.
+
+
+- for-loop:
+
+  ```bash
+  for varname in words do list done
+  ```
+  
+  - `words` and `list` must be terminated by `;` or a newline.
+  - Short form of `for varname in "$@"` is `for varname`.
+  - May contain `break` and `continue`.
+
+
+- case-construct:
+
+  ```bash
+  case word in pattern | pattern ) list;; pattern | pattern ) list;; esac
+  ```
+
+  - `word` and `pattern` not subject to word splitting and pathname globbing.
+  - `pattern` can contain unquoted globs used to match the given `word`.
+
+
+### : null command
+
+```bash
 if who | grep -q jane
 then
     :    # returns an exit status of 0
 else
     echo "jane is not currently logged on"
 fi
-Note: both the null command and true return 0, for code clarity a good 
-      habit is to use : for empty commands and true in conditions.
+```
+
+Note: both `:` and `true` return 0, for code clarity a good habit is to use `:` for empty commands and `true` in conditions.
 
 
-## test command
+### test command
 
-[ and test are almost the same command, the only difference is that [ 
-expects its last argument to be ]
-As [ is actually a command, it's necessary to add a space after [ and 
-also before ] because that's the last argument of [
+`[` and `test` are almost the same command, the only difference is that `[` expects its last argument to be `]`.
+As `[` is actually a command, it's necessary to add a space after `[` and also before `]` because that's the last argument of `[`.
 
--r file         Check whether file is readable
--w file         Check whether file is writable
--x file         Check whether we have execute access to file
--f file         Check whether file is a regular file 
--s file         Check whether file has size greater than 0
--d file         Check whether file is a directory
--e file         Check whether file exists (true even if file is a dir)
--t fd           Check whether file descriptor number is open and is 
-                associated with a terminal
+Check files:
 
-"$var" = "str"  Check whether the same (space needed before/after =)
-"$var" != "str" Check whether they differ (space needed before/after !=)
--z "$var"       Check whether var has size 0 (does not distinguish 
-                between an unset var and a var that is empty) 
--n "$var"       Check whether var has non-zero size
-"$var"          Equivalent to -n "$var" 
+```bash
+-r file         # check whether readable
+-w file         # check whether writable
+-x file         # check whether it can be executed
+-f file         # check whether it's a regular file 
+-s file         # check whether size greater than 0
+-d file         # check whether it's a directory
+-e file         # check existence (true even if file is a directory)
+-t fd           # check whether file descriptor number is open and is 
+                # associated with a terminal
+```
 
-There is no test for substrings, for that we use grep: 
-echo "$var" | grep -q "sub1"
+Check strings:
 
-A shell variable can contain a string that represents a number:
-$num -eq 2      Check whether num equals 2
-$num -ne 2      Check whether num is not equal to 2
-$num -lt 2      Check whether num < 2
-$num -le 2      Check whether num <= 2
-$num -gt 2      Check whether num > 2
-$num -ge 2      Check whether num >= 2
+```bash
+"$var" = "str"  # check whether the same (space needed before/after =)
+"$var" != "str" # check whether they differ (space needed before/after !=)
+-z "$var"       # check whether var has size 0 (does not distinguish 
+                # between an unset var and a var that is empty) 
+-n "$var"       # check whether var has non-zero size
+"$var"          # equivalent to -n "$var" 
+```
 
-To negate an expression use ! (needs a space after it). It can also be 
-placed outside the test command (pipeline negation)
+Check numbers:
 
-To combine expressions do not use the obsolete -a (and) and -o (or) 
-options, instead use two tests combined with && and ||
+```bash
+$num -eq 2      # check whether num equals 2
+$num -ne 2      # check whether num is not equal to 2
+$num -lt 2      # check whether num < 2
+$num -le 2      # check whether num <= 2
+$num -gt 2      # check whether num > 2
+$num -ge 2      # check whether num >= 2
+```
 
-For grouping do not use test command's obsolete \( \), instead implement 
-multiple tests in braces like:
-[ -e file1 ] &&  { [ -x file2 ] || [ -x file3 ]; }
+Negate and combine:
+
+- To negate an expression use ! (needs a space after it). It can also be placed outside the test command (pipeline negation).
+
+- To combine expressions do not use the obsolete `-a` (and) and `-o` (or) options, instead use two tests combined with `&&` and `||`.
+
+- For grouping do not use test command's obsolete `\( \)`, instead implement multiple tests in braces like:
+
+  ```bash
+  [ -e file1 ] && { [ -x file2 ] || [ -x file3 ]; }
+  ```
 
 
 ## Shell arithmetic
 
-In the original Bourne shell, arithmetic is done using the expr command:
-result=$(expr $var1 + 2)
-result=$(expr $var2 + $var1 / 2)
-result=$(expr $var2 \* 5)          # note that * has to be escaped
-count=$(expr $count + 1)
+- In the original Bourne shell, arithmetic is done using the `expr` command:
 
-The POSIX shells have arithmetic expansion where specifying the 
-variables with $ or ${} is optional (exceptions are $1, $2, ... ):
-result=$((var1 + 2))
-result=$((var2 + var1 / 2))
-result=$((var2 * 5))
-count=$((count + 1))
+  ```bash
+  result=$(expr $var1 + 2)
+  result=$(expr $var2 + $var1 / 2)
+  result=$(expr $var2 \* 5)
+  count=$(expr $count + 1)
+  ```
 
-The above two methods only support integer operations,
-for floating-point we have the basic calculator command:
-var1=12.5
-var2=6.0
-echo "$var1 + $var2" | bc
+- The POSIX shells have **arithmetic expansion** `$((..))` where specifying the variables with `$` or `${..}` is optional (exceptions are `$1`, `$2`, ... ):
+
+  ```bash
+  result=$((var1 + 2))
+  result=$((var2 + var1 / 2))
+  result=$((var2 * 5))
+  count=$((count + 1))
+  ```
+
+- The above two methods only support integer operations, for floating-point we have the **basic calculator** command:
+
+  ```bash
+  var1=12.5
+  var2=6.0
+  echo "$var1 + $var2" | bc
+  ```
 
 
 ## Functions
 
-myfunc1()            # function definitions must happen before their use
-{
+Function definitions must happen before their use and have the following format:
+
+```bash
+fname () compound-command
+```
+
+Examples on how to define and call functions:
+
+```bash
+myfunc1 () {
     provided_username=$1
     provided_password=$2
     return 2
@@ -615,86 +672,56 @@ then
     echo 'OK!'
 fi
 
-myfunc2() { echo "Hi"; }  # add a semicolon because shell expects a list
+myfunc2 () { echo "Hi"; }
 result=$(myfunc2)
 echo $result
+```
 
-- Except for $1, $2, ... which are the params passed to the function and 
-  not the original ones, all script variables can be read and written 
-- Use return to end the function, returned value can be read with $? 
-  (exit status of last command is returned when no return is specified) 
-- echo in function does write to stdout, that can be caught with $(..) 
+- Except for `$1`, `$2`, ... which contain the arguments passed to the function, all script variables can be read and written.
+- Use `return n` to end the function, the returned value can be read with `$?`. The exit status of the last command is returned when no `return` is specified or when `n` is not given after `return`.
+- `echo` in function does write to stdout, that can be caught with `$(..)`. 
 
 
-## ~username/"path with space"
+## Tilde expansion
 
-1. A word that begins with an unquoted tilde + an optional unquoted 
-   username will expand to the home directory. If a path follows, then 
-   also the first slash must be unquoted. If the username is invalid, 
-   or the tilde expansion fails, the word is left unchanged 
-2. Tilde expansion happens in variable assignments 
-3. The result of a parameter expansion is never tilde expanded 
-   (that's because tilde expansion happens before parameter expansion) 
-4. The pathname resulting from a tilde expansion is treated as if quoted 
-   to prevent it being altered by word splitting and pathname globbing 
+```bash
+~username/"path with space"
+```
+
+1. A word that begins with an unquoted tilde and an optional unquoted username will expand to the home directory. If a path follows, then also the first slash must be unquoted. If the username is invalid, or the tilde expansion fails, the word is left unchanged.
+2. Tilde expansion happens in variable assignments.
+3. The result of a parameter expansion is never tilde expanded (that's because tilde expansion happens before parameter expansion).
+4. The pathname resulting from a tilde expansion is treated as if quoted to prevent it being altered by word splitting and pathname globbing.
 
 
 ## Pattern matching (globs or globbing)
 
-Unquoted globs meaning:
-*              Matches 0 or more characters
-foo*           Matches any string beginning with foo
-*x*            Matches any string containing an x (begin, middle or end)
-*.tar.gz       Matches any string ending with .tar.gz
-?              Matches 1 character
-[AaBbCc]       Matches 1 char from the list
-[!RGB]         Matches 1 char not in the list
-[a-g]          Matches 1 char from the range
-[CHARCLASS]    Matches 1 char from the given POSIX character class
-               Examples: [[:space:]] or [![:space:]] 
+Unquoted globs:
+
+- `*` matches 0 or more characters.
+- `foo*` matches any string beginning with foo.
+- `*x*` matches any string containing an `x` (begin, middle or end).
+- `*.tar.gz` matches any string ending with `.tar.gz`.
+- `?` matches 1 character.
+- `[AaBbCc]` matches 1 character from the list.
+- `[!RGB]` matches 1 character not in the list.
+- `[a-g]` matches 1 character from the range.
+- `[CHARCLASS]` matches 1 character from the given POSIX character class, for examples: `[[:space:]]` or `[![:space:]]`.
 
 Pathname expansion has additional rules:
-1. Non-matching globs are expanded to themselves, always test a match 
-   for existence with -e
-2. Glob patterns do not match slashes and do not cross the slashes 
-   that separate pathname components 
-3. Even if a filename contains spaces, tabs, newlines, quotes, the 
-   expansion of a glob that matches that filename will still preserve 
-   each filename as a single word 
-4. Filenames beginning with a dot can only be matched by patterns that 
-   also start with a dot. To not match current dir and parent dir use:
-   .[!.]* ..?*
-5. A glob that ends in / will only match directories, the / will be 
-   included in the result 
-Hint:
-Use ./* instead of * so filenames with dashes won't become options!
+
+1. Non-matching globs are expanded to themselves, always test a match for existence with `-e`.
+2. Glob patterns do not match slashes and do not cross the slashes that separate pathname components.
+3. Even if a filename contains spaces, tabs, newlines, quotes, the expansion of a glob that matches that filename will still preserve each filename as a single word.
+4. Filenames beginning with a dot can only be matched by patterns that also start with a dot. To not match current dir and parent dir use `.[!.]* ..?*`.
+5. A glob that ends in `/` will only match directories, the `/` will be included in the result.
+
+Important: always use `./*` instead of `*` so that filenames with dashes won't become options!
 
 
-## File commands
+## Advanced
 
-basename 'path'
-Trailing slash is trimmed from the given path and then the rightmost 
-part of that is printed. 
-Exception: if path is / then basename returns /
-
-dirname 'path'
-It's the complement of basename, it prints what basename does not print 
-(the ending slash is trimmed if dirname is not / alone)
-Exception: if path is / then dirname returns /
-
-mktemp
-Makes a unique temporary filename and prints it to stdout. Usually it 
-also gets created with size 0 (only some older systems do not create it).
-The -d option creates a temporary directory instead of a file. 
-mktemp is not POSIX, but supported by most systems: 
-mytempfile=$(mktemp)
-mytempdir=$(mktemp -d)
-
-: > 'path'
-Used to truncate a file to zero length
-
-
-## Check whether a command is available
+### Command available?
 
 ```bash
 if command -v cmd >/dev/null 2>&1
@@ -706,122 +733,164 @@ fi
 ```
 
 
-## eval command
+### eval command
 
+```bash
 eval [args]
-In simple terms with eval a given input is parsed twice. In detail, eval 
-concatenates the arguments (which may have been expanded) with spaces, 
-and then it instructs the shell to execute the result. The exit status 
-of eval is the exit status of what has been run by the shell. 
+```
+
+In simple terms with eval a given input is parsed twice. In detail, eval concatenates the arguments (which may have been expanded) with spaces, and then it instructs the shell to execute the result. The exit status of eval is the exit status of what has been run by the shell.
 
 
-## Arrays
+### Arrays
 
-In POSIX there is no native array type, but there are different 
-possibilities. To be coherent with the positional parameters and with 
-tools like cut, sed, awk, sort, one-based indexing is used here.
+In POSIX there is no native array type, but there are different possibilities. To be coherent with the positional parameters and with tools like cut, sed, awk, sort, **one-based** indexing is used here.
 
 1. Space separated string (if elements have no spaces):
-array='0 1.3 4.2 6 8.7 16.2'           # init array
-array='-1 '$array                      # add to start
-array=$array' 32.1'                    # append to end
-item=$(echo "$array" | cut -d' ' -f$i) # get item with index $i
-for item in $array                     # loop array
-do
-    printf '"%s"\n' "$item"
-done
+
+   ```bash
+   array='0 1.3 4.2 6 8.7 16.2'           # init array
+   array='-1 '$array                      # add to start
+   array=$array' 32.1'                    # append to end
+   item=$(echo "$array" | cut -d' ' -f$i) # get item with index $i
+   for item in $array                     # loop array
+   do
+       printf '"%s"\n' "$item"
+   done
+   ```
 
 2. Using positional parameters (gives us only one array):
-set --                                 # clear all
-set -- ./*                             # fill with files
-set -- 'Item 1' 'Item 2' 'Item 3'      # add items (array is cleared)
-set -- 'Item start' "$@"               # add to start
-set -- "$@" 'Item end'                 # append to end
-eval "item=\${$i}"                     # get item with index $i
-shift 1                                # delete first item
-for item in "$@"                       # loop array
-do
-    printf '"%s"\n' "$item"
-done
+
+   ```bash
+   set --                                 # clear all
+   set -- ./*                             # fill with files
+   set -- 'Item 1' 'Item 2' 'Item 3'      # add items (array is cleared)
+   set -- 'Item start' "$@"               # add to start
+   set -- "$@" 'Item end'                 # append to end
+   eval "item=\${$i}"                     # get item with index $i
+   shift 1                                # delete first item
+   for item in "$@"                       # loop array
+   do
+       printf '"%s"\n' "$item"
+   done
+   ```
 
 3. Using multiple shell variables:
-len=3 n=1
-while [ $n -le $len ]                  # create items
-do
-    eval "array$n=\"Item ${n}\""
-    n=$((n+1))
-done
-eval "item=\$array$i"                  # get item with index $i
-n=1
-while [ $n -le $len ]                  # loop array
-do
-    eval "item=\$array$n"
-    printf '"%s"\n' "$item"
-    n=$((n+1))
-done
+
+   ```bash
+   len=3 n=1
+   while [ $n -le $len ]                  # create items
+   do
+       eval "array$n=\"Item ${n}\""
+       n=$((n+1))
+   done
+   eval "item=\$array$i"                  # get item with index $i
+   n=1
+   while [ $n -le $len ]                  # loop array
+   do
+       eval "item=\$array$n"
+       printf '"%s"\n' "$item"
+       n=$((n+1))
+   done
+   ```
+
+### Sourcing with . ./libraryname.sh
+
+When a script is included with the dot command, it runs within the existing shell. Any variables created or modified by the script will remain available after it completes. In contrast, if a script is run normally, then a separate subshell (with a completely separate set of variables) is spawned to run the script. 
+
+- Libraries should have a `.sh` extension and should not be executable. The Shebang is not necessary, but for syntax highlighting and for ShellCheck it's better to have it.
+
+- In POSIX the dot command does not support passing arguments to the called script (pass them as vars).
+
+- `source` is a synonym for the dot command in bash, but not in POSIX.
 
 
-## Sourcing with . ./libraryname.sh
+### exec command
 
-When a script is included with the dot command, it runs within the 
-existing shell. Any variables created or modified by the script will 
-remain available after it completes. In contrast, if a script is run 
-normally, then a separate subshell (with a completely separate set of 
-variables) is spawned to run the script. In POSIX the dot command does 
-not support passing arguments to the called script (pass them as vars). 
-
-Convention: libraries should have a .sh extension and should not be 
-            executable. The Shebang is not necessary, but for syntax 
-            highlighting and for ShellCheck it's better to have it. 
-
-Note: source is a synonym for the dot command in bash, but not in POSIX. 
-
-
-## exec command
-
+```bash
 exec [cmd [args]] [redirections]
+```
 
-If a cmd is specified, exec replaces the shell with cmd without creating 
-a new process, thus the commands following the exec line will be 
-ignored. If cmd is not specified, any redirections take effect in the 
-current shell. The redirections can be used to open, close or copy 
-file descriptors (abbreviated with fd):
-exec 3< file    # open file as fd 3 for reading
-exec 4> file    # open file as fd 4 for writing
-exec 5<> file   # open file as fd 5 for reading/writing
-exec 6>> file   # open file as fd 6 for appending
-exec 7<&0       # duplicate stdin as fd 7
-exec 7<&-       # close fd 7 to free it for other processes to use
+- If `cmd` is specified, `exec` replaces the shell with `cmd`, without creating a new process, thus the commands following the `exec` line will be ignored.
+
+- If `cmd` is not specified, any redirections take effect in the current shell. The redirections can be used to open, close or copy file descriptors (abbreviated with fd):
+
+  ```bash
+  exec 3< file    # open file as fd 3 for reading
+  exec 4> file    # open file as fd 4 for writing
+  exec 5<> file   # open file as fd 5 for reading/writing
+  exec 6>> file   # open file as fd 6 for appending
+  exec 7<&0       # duplicate stdin as fd 7
+  exec 7<&-       # close fd 7 to free it for other processes to use
+  ```
 
 
-## trap command
+### trap command
 
+```bash
 trap action signals
+```
 
-action: 
-- a dash as an action resets each given signal to its default action 
-- a function as an action is called for the given signals
-- commands as an action are executed for the given signals:
-  1. If the commands are placed in double-quotes all expansions will 
-     happen when the trap is defined
-  2. If the commands are placed in single-quotes all expansions will 
-     happen when the trap is executed
+- `action`: 
+  - a `-` as an action resets each given signal to its default action.
+  - a function as an action is called for the given signals.
+  - commands as an action are executed for the given signals:
+    1. If the commands are placed in double-quotes all expansions will happen when the trap is defined.
+    2. If the commands are placed in single-quotes all expansions will happen when the trap is executed.
 
-signals (space separated):
-INT (2)   sent when the user presses Ctrl+C
-TERM (15) default kill signal (sent when you call kill)
-HUP (1)   hang up has about the same harshness as TERM
-          (sent when a user disconnects from the terminal)
-QUIT (3)  harshest of the ignorable signals
-EXIT (0)  sent when the script exits at the end or with the exit command
-Note: the KILL (9) signal cannot be handled with a trap. 
+- `signals` (space separated):
+  - `INT` (2) sent when the user presses `Ctrl+C`.
+  - `TERM` (15) default kill signal (sent when you call `kill`).
+  - `HUP` (1) hang up is sent when a user disconnects from the terminal, it has about the same harshness as `TERM`.
+  - `QUIT` (3) harshest of the ignorable signals.
+  - `EXIT` (0) sent when the script exits at the end or with the exit command.
+  - `KILL` (9) signal **cannot** be handled with a trap.
 
-Attention: the default trap actions usually restore the tty to a sane 
-           state, but if you setup your own trap actions then you have 
-           to revert tty changes in them. 
+Attention: the default trap actions usually restore the tty to a sane state, but if you setup your own trap actions then you have to revert tty changes in them. 
 
 
-## Strings manipulation
+## Manipulation
+
+### Files
+
+Parse file part:
+
+```bash
+basename 'path'
+```
+
+- Trailing slash is trimmed from the given path and then the rightmost part of that is printed.
+- If path is `/` then `basename` returns `/`.
+
+Parse directory part:
+
+```bash
+dirname 'path'
+```
+
+- It's the complement of `basename`, it prints what `basename` does not print, but with the trailing slash trimmed.
+- If path is `/` then `dirname` returns `/`.
+
+Temporary file/directory:
+
+```bash
+mktemp
+```
+
+- Makes a unique temporary filename and prints it to stdout. Usually it also gets created with size 0 (only some older systems do not create it), for example:  
+  `mytempfile=$(mktemp)`
+- The `-d` option creates a temporary directory instead of a file, for example:  
+  `mytempdir=$(mktemp -d)`
+- This command is not POSIX, but supported by most systems.
+
+Truncate a file to zero length:
+
+```bash
+: > 'path'
+```
+
+
+### Strings
 
 Count the chars:
 wc -m              # -c counts the bytes
@@ -833,6 +902,9 @@ seq -s ' ' FIRST LAST
 
 To concatenate strings write them attached to each other:
 ADDEDSTR=${var1}mytext'with space'"and $var2"
+
+Check substrings:
+echo "$var" | grep -q "sub1"
 
 Remove prefix/suffix strings:
 noprefix=${var#word}     # remove smallest prefix match
@@ -949,7 +1021,7 @@ Note: don't confuse the "POSIX character class" with what is normally
       expression" like [x-z[:digit:]]
 
 
-## Lines manipulation
+### Lines
 
 Sort the lines of a text:
 sort  # -n numerically, -u suppress duplicated lines, -r reverse sort
@@ -1020,20 +1092,12 @@ done < "$filename"
   is necessary to make sure that the last line is gotten 
 
 
-## getopts
+### getopts
 
-According to POSIX, options are single alphanumeric characters preceded 
-by a hyphen, they can have an optional option-argument following it 
-separated by optional whitespaces. Multiple options may follow a hyphen 
-if the options do not take option-arguments. After the options, 
-non-option arguments, also called operands, may follow. getopts supports 
-the POSIX guideline of explicitly marking the end of the options with 
-the -- delimiter. It is not mandatory to provide this double-dash, just 
-make sure that the first non-option argument does not start with a 
-hyphen. For example, if this first non-option argument is a glob, then 
-there is a chance that the first expanded filename starts with a hyphen. 
-Note: bear in mind that not all UNIX commands support the -- convention 
+According to POSIX, options are single alphanumeric characters preceded by a hyphen, they can have an optional option-argument following it separated by optional whitespaces. Multiple options may follow a hyphen if the options do not take option-arguments. After the options, non-option arguments, also called operands, may follow. `getopts` supports the POSIX guideline of explicitly marking the end of the options with the `--` delimiter. It is not mandatory to provide this double-dash, just make sure that the first non-option argument does not start with a hyphen. For example, if this first non-option argument is a glob, then there is a chance that the first expanded filename starts with a hyphen.  
+Note: bear in mind that not all UNIX commands support the `--` convention.
 
+```bash
 getopts "aZ" opt    # expected are -a and -Z with no option-args
 getopts "aZ:" opt   # colon after an option means it has an option-arg
 getopts ":aZ:" opt  # colon in first position means that we handle the
@@ -1069,3 +1133,4 @@ for operand in "$@"
 do
     echo "$operand"
 done
+```
