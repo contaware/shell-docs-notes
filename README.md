@@ -20,7 +20,7 @@ This document is a reference guide for POSIX Shell programming. It is a bit more
   - [Variables](#variables)
   - [Single variable assignments](#single-variable-assignments)
   - [Multiple variable assignments](#multiple-variable-assignments)
-  - [Optional single command following the variable assignments](#optional-single-command-following-the-variable-assignments)
+  - [Command after variable assignments](#command-after-variable-assignments)
   - [Parameter expansion](#parameter-expansion)
   - [Parameter expansion with default](#parameter-expansion-with-default)
   - [Local vs. environment variables](#local-vs-environment-variables)
@@ -29,26 +29,51 @@ This document is a reference guide for POSIX Shell programming. It is a bit more
   - [Simple command to list](#simple-command-to-list)
   - [Compound commands](#compound-commands)
   - [Background commands](#background-commands)
-  - [wait command](#wait-command)
+  - [wait](#wait)
 - [Flow control](#flow-control)
   - [if, while, until, for and case](#if-while-until-for-and-case)
   - [: null command](#-null-command)
-  - [test command](#test-command)
+  - [test](#test)
 - [Shell arithmetic](#shell-arithmetic)
 - [Functions](#functions)
 - [Tilde expansion](#tilde-expansion)
 - [Pattern matching (globs or globbing)](#pattern-matching-globs-or-globbing)
 - [Advanced](#advanced)
   - [Command available?](#command-available)
-  - [eval command](#eval-command)
+  - [eval](#eval)
   - [Arrays](#arrays)
   - [Sourcing with . ./libraryname.sh](#sourcing-with--librarynamesh)
-  - [exec command](#exec-command)
-  - [trap command](#trap-command)
+  - [exec](#exec)
+  - [trap](#trap)
 - [Manipulation](#manipulation)
   - [Files](#files)
+    - [basename](#basename)
+    - [dirname](#dirname)
+    - [Make temporary file/directory](#make-temporary-filedirectory)
+    - [Truncate to zero length](#truncate-to-zero-length)
   - [Strings](#strings)
+    - [Count characters](#count-characters)
+    - [Print numeric sequence](#print-numeric-sequence)
+    - [Concatenate strings](#concatenate-strings)
+    - [Test for substring](#test-for-substring)
+    - [Remove prefix/suffix strings](#remove-prefixsuffix-strings)
+    - [tr (operate on character sets)](#tr-operate-on-character-sets)
   - [Lines](#lines)
+    - [Sort lines](#sort-lines)
+    - [Count lines](#count-lines)
+    - [Show first N lines](#show-first-n-lines)
+    - [Show last N lines](#show-last-n-lines)
+    - [Get N'th line](#get-nth-line)
+    - [grep lines](#grep-lines)
+    - [Wrap lines](#wrap-lines)
+    - [Read input](#read-input)
+    - [User input](#user-input)
+    - [Read line by line](#read-line-by-line)
+  - [diff](#diff)
+  - [cut](#cut)
+  - [awk](#awk)
+  - [sed](#sed)
+  - [POSIX character classes](#posix-character-classes)
   - [getopts](#getopts)
 
 
@@ -294,7 +319,7 @@ var1=value1 var2=value2
 ```
 
 
-### Optional single command following the variable assignments
+### Command after variable assignments
 
 - The variables will be made accessible to a built-in/external command following and will only be valid for that command and its children:
 
@@ -487,7 +512,7 @@ A job is a process that the shell manages:
 Note: for background commands the stdin is detached (not for subshells). 
 
 
-### wait command
+### wait
 
 ```bash
 wait [PIDs]
@@ -567,7 +592,7 @@ fi
 Note: both `:` and `true` return 0, for code clarity a good habit is to use `:` for empty commands and `true` in conditions.
 
 
-### test command
+### test
 
 `[` and `test` are almost the same command, the only difference is that `[` expects its last argument to be `]`.
 As `[` is actually a command, it's necessary to add a space after `[` and also before `]` because that's the last argument of `[`.
@@ -733,7 +758,7 @@ fi
 ```
 
 
-### eval command
+### eval
 
 ```bash
 eval [args]
@@ -805,7 +830,7 @@ When a script is included with the dot command, it runs within the existing shel
 - `source` is a synonym for the dot command in bash, but not in POSIX.
 
 
-### exec command
+### exec
 
 ```bash
 exec [cmd [args]] [redirections]
@@ -825,7 +850,7 @@ exec [cmd [args]] [redirections]
   ```
 
 
-### trap command
+### trap
 
 ```bash
 trap action signals
@@ -853,7 +878,7 @@ Attention: the default trap actions usually restore the tty to a sane state, but
 
 ### Files
 
-Parse file part:
+#### basename
 
 ```bash
 basename 'path'
@@ -862,7 +887,7 @@ basename 'path'
 - Trailing slash is trimmed from the given path and then the rightmost part of that is printed.
 - If path is `/` then `basename` returns `/`.
 
-Parse directory part:
+#### dirname
 
 ```bash
 dirname 'path'
@@ -871,7 +896,7 @@ dirname 'path'
 - It's the complement of `basename`, it prints what `basename` does not print, but with the trailing slash trimmed.
 - If path is `/` then `dirname` returns `/`.
 
-Temporary file/directory:
+#### Make temporary file/directory
 
 ```bash
 mktemp
@@ -883,7 +908,7 @@ mktemp
   `mytempdir=$(mktemp -d)`
 - This command is not POSIX, but supported by most systems.
 
-Truncate a file to zero length:
+#### Truncate to zero length
 
 ```bash
 : > 'path'
@@ -892,45 +917,191 @@ Truncate a file to zero length:
 
 ### Strings
 
-Count the chars:
+#### Count characters
+
+```bash
 wc -m              # -c counts the bytes
-or:
-str_length=${#var} # some shells still return bytes instead of chars
+str_length=${#var} # some older shells return bytes instead of chars
+```
 
-Print the numeric sequence from FIRST to LAST with space separator:
+#### Print numeric sequence
+
+```bash
 seq -s ' ' FIRST LAST
+```
 
-To concatenate strings write them attached to each other:
+#### Concatenate strings
+
+```bash
 ADDEDSTR=${var1}mytext'with space'"and $var2"
+```
 
-Check substrings:
+#### Test for substring
+
+```bash
 echo "$var" | grep -q "sub1"
+```
 
-Remove prefix/suffix strings:
+#### Remove prefix/suffix strings
+
+```bash
 noprefix=${var#word}     # remove smallest prefix match
 nosuffix=${var%word}     # remove smallest suffix match
 noprefix=${var##word}    # remove largest prefix match
 nosuffix=${var%%word}    # remove largest suffix match
-Note: place word in quotes to prevent glob characters in it from being 
-      used to match the content of var
+```
 
-cut strings or cut each line of a given file:
+- Hint: place `word` in quotes to prevent glob characters in it from being used to match the content of `var`.
+
+#### tr (operate on character sets)
+
+```bash
+echo "Str" | tr [a-z] [A-Z]     # lowercase to uppercase
+echo "Str" | tr [:space:] '\t'  # any whitespace to a tab
+echo "a{12}" | tr '{}' '()'     # transform braces into parentheses
+printf 'N\nL\n' | tr -d '\n'    # delete all newlines
+echo "Str" | tr -d 'St'         # delete a set of chars
+echo "Str  Hi" | tr -s ' '      # squeeze chars leaving one occurrence
+```
+
+
+### Lines
+
+#### Sort lines
+
+```bash
+sort
+```
+
+- `-n` numerically.
+- `-u` suppress duplicated lines.
+- `-r` reverse sort.
+
+#### Count lines
+
+```bash
+wc -l
+```
+
+#### Show first N lines
+
+```bash
+head -n N
+```
+
+#### Show last N lines
+
+```bash
+tail -n N
+```
+
+#### Get N'th line
+
+```bash
+head -n N | tail -n 1
+```
+
+#### grep lines
+
+```bash
+grep 'regex' [filename]
+```
+
+- `-i` ignores case.
+- `-w` matches whole words only.
+- `-v` inverts the match (it hides the matching lines).
+- `-E` for extended regular expression, for example if needing `+ ? |`  
+  Note: `egrep` is obsolete, the `-E` option is the way to go.
+
+#### Wrap lines
+
+```bash
+fold [filename]
+```
+
+- `-s` breaks at blank characters.
+- `-w N` breaks at the given amount of column positions (default: 80).
+
+#### Read input
+
+```bash
+read vars
+```
+
+- The `read` result (terminating newline removed) is field split to the given `vars` according to the IFS. If there are fewer fields than there are variables, the remaining variables are set to the empty string. If there are fewer variables than fields, the last variable will be set to the remaining fields with trailing IFS whitespaces removed.
+- By default `read` will interpret backslashes as escape characters. This is rarely desired. Normally you just want to read data, including backslashes as part of the input string, that is what the `-r` option does.
+
+#### User input
+
+```bash
+printf 'Do you want to continue (y/N) ? ' # capitalized answer in (y/N) 
+read -r answer                            # is considered the default 
+if [ "$answer" != "${answer#[Yy]}" ]      # when just ENTER is pressed 
+then
+    echo Yes
+else
+    echo No
+fi
+```
+
+#### Read line by line
+
+```bash
+while IFS= read -r line || [ -n "$line" ]
+do
+    printf '%s\n' "$line"
+done < "$filename"
+```
+
+- Clear IFS to prevent leading/trailing whitespaces from being trimmed.
+- `read` always places the last line into the variable, but returns a nonzero status if no ending newline is found, thus `|| [ -n "$line" ]` is necessary to make sure that the last line is gotten.
+
+
+### diff
+
+```bash
+diff left right
+```
+
+- `-C N` outputs N-lines of context output, `-c` is the short form for `-C 3`.
+- `-U N` outputs N-lines of unified context output, `-u` is the short form for `-U 3`.
+- Exit status of 0 if no differences found.
+
+In the traditional output format (which is the default), the `<` and `>` signs indicate which file the lines appear in, `a` stands for added, `d` for deleted, `c` for changed, `L` is the left file line range and `R` is the right file line range:
+
+- `LaR` means add after line `L` the lines from `R` range.
+- `LcR` means change `L` range with `R` range.
+- `LdR` means delete `L` range (if not deleted they would have appeared after line `R`).
+
+The traditional format is hard to read because we do not see the context around the changes. The context format shows the change hunks with some lines above and below. The unified format also shows the context, but the left and right changes are interleaved.
+
+Note: traditional format and context format use `start-line,end-line` ranges, while the unified format uses `start-line,count` ranges.
+
+
+### cut
+
+```bash
 cut -c LIST [filename]
 cut -d DELIM -f LIST [filename]
-DELIM is a single character that splits the string (default is TAB),
-that same character is also used to separate the output fields 
-LIST is made up of one range, or many ranges separated by commas: 
-N      N'th, it uses one-based indexes
-N-M    from N'th to M'th
-N-     from N'th to end
-Note: cut always appends a newline at the end
+```
 
-rev(erse) lines:
-echo 'Hello World!' | rev | cut -c 2- | rev     # removes the last char
-Note: the ending newlines are not reversed, and if no ending newline is 
-      present, then rev does not append one 
+- `DELIM` is a single character that splits the string (default is TAB), that same character is also used to separate the output fields.
+- `LIST` is made up of one range, or many ranges separated by commas. Range: `N-M` (one-based and `N-` means `N` to end).
+- `cut` always appends a newline at the end.
 
-awk (separators are more flexible compared to cut):
+To remove the last char use the reverse tool:
+
+```bash
+echo 'Hello World!' | rev | cut -c 2- | rev 
+```
+
+- `rev` does not reverse the ending newline.
+- `rev` does not append a newline if it is not present.
+
+
+### awk
+
+```bash
 - Fields are columns of data and records are rows of data 
 - awk strings must be enclosed in double-quotes, not in single-quotes 
   (single-quotes have no special meaning in awk) 
@@ -973,39 +1144,31 @@ The variable assignment option (we can use multiple of them):
             and leading/trailing empty lines are ignored (paragraph mode) 
 -v OFS=' '  string, default output field separator is a single space
 -v ORS='\n' string, default output record separator is a newline
+```
 
-tr (operate on character sets):
-echo "Str" | tr [a-z] [A-Z]     # lowercase to uppercase
-echo "Str" | tr [:space:] '\t'  # any whitespace to a tab
-echo "a{12}" | tr '{}' '()'     # transform braces into parentheses
-printf 'N\nL\n' | tr -d '\n'    # delete all newlines
-echo "Str" | tr -d 'St'         # delete a set of chars
-echo "Str  Hi" | tr -s ' '      # squeeze chars leaving one occurrence
 
-sed (replace a string):
-- sed reads one line at a time and if a trailing newline is present, it 
-  removes it. When sed is done, it re-adds the trailing newline, but 
-  only if it was already there 
-- The character after the s is the delimiter; conventionally it is a 
-  slash, but you can take whatever is not in your strings 
+### sed
+
+```bash
 echo 'This is the OldString' | sed 'N,M s/OldString/NewString/g'
 sed 's/OldString/NewString/g' input.txt
 echo 'hi!' | sed 's/.$//'       # removes the last char
 echo 'These are 12 34 2140' | sed 's/[0-9]/N/g'
 echo 'hi  there!' | sed -E 's/([a-z]*)[[:space:]]+([a-z]*).*/\1 \2/g'
-s      substitute
-g      global, without it, sed will only replace the first occurrence 
-       on each line (remember that you always need three delimiters)
-N      N'th line, it uses one-based indexes
-N,M    from N'th to M'th line
-N,$    from N'th to end line
-&      placeholder, you can have any number in the replacement string
-\1..\9 placeholders for the (..) matches, use -E to not escape (..)
--i     ATTENTION: that edits given file in-place; sed has no 
-       case-insensitive matching option!
--E     is for extended regular expression, for example if needing + ? |
+```
 
-In regex use POSIX character classes:
+- `sed` reads one line at a time and if a trailing newline is present, it removes it. When `sed` is done, it re-adds the trailing newline, but only if it was already there.
+- The character after `s` (substitute) is the delimiter; conventionally it is a slash, but you can take whatever is not in your strings.
+- Without `g` (global), `sed` only replaces the first occurrence on each line (leave the terminating slash because `sed` expects three delimiters).
+- Line range: `N,M` (one-based and `N,$` means `N` to end).
+- We can have any number of `&` (placeholder) in the replacement string.
+- `\1..\9` are the placeholders for the `(..)` matches, use `-E` to not escape `(..)`
+- `-i` edits given file in-place; sed has no case-insensitive matching option!!
+- `-E` is for extended regular expression, for example if needing `+ ? |`
+
+### POSIX character classes
+ 
+```bash
 [[:space:]] instead of \s (space, tab, newline, carriage return)
 [[:blank:]] space and tab
 [[:word:]]  instead of \w or [a-zA-Z0-9_]
@@ -1014,82 +1177,9 @@ In regex use POSIX character classes:
 [[:digit:]] instead of \d or [0-9]
 [[:lower:]] instead of [a-z]
 [[:upper:]] instead of [A-Z]
-Note: don't confuse the "POSIX character class" with what is normally 
-      called a "regex character class". [x-z0-9] is an example of a 
-      "regex character class" which POSIX calls a "bracket expression". 
-      [:digit:] is a "POSIX character class", used inside a "bracket 
-      expression" like [x-z[:digit:]]
+```
 
-
-### Lines
-
-Sort the lines of a text:
-sort  # -n numerically, -u suppress duplicated lines, -r reverse sort
-
-Count the lines:
-wc -l
- 
-Show the first N lines:
-head -n N
-
-Show the last N lines:
-tail -n N
-
-Get N'th line:
-head -n N | tail -n 1
-
-Output the lines matching the given regex:
-grep 'HI' [filename]
--i     ignore case
--w     match whole words only
--v     invert the match (it hides the matching lines)
--E     is for extended regular expression, for example if needing + ? |
-       (egrep is obsolete, the -E option is the way to go)
-
-Wrap lines:
-fold [filename]
--s     break at blank characters
--w N   break at the given amount of column positions (default: 80)
-
-Compare files line by line:
-diff left right       # exit status of 0 if no differences found
-LaR    add lines in R-range of right file after line L of left file
-LcR    change L-range of left file with R-range of right file
-LdR    delete lines in L-range from left file, if not deleted they would 
-       have appeared after line R in right file
--C N   N-lines of context output (-c short form for -C 3)
--U N   N-lines of unified context output (-u short form for -U 3)
-       Note: the number after the comma is the count, not the range end
-
-read [-r] vars
-- The read result (terminating newline removed) is field split to the 
-  given vars according to the IFS. If there are fewer fields than there 
-  are vars, the remaining vars are set to the empty string. If there are 
-  fewer vars than fields, the last var will be set to the remaining 
-  fields with trailing IFS whitespaces removed 
-- By default read will interpret backslashes as escape characters. This 
-  is rarely desired. Normally you just want to read data, including 
-  backslashes as part of the input string, that is what read -r does 
-
-Get user input:
-printf 'Do you want to continue (y/N) ? ' # capitalized answer in (y/N) 
-read -r answer                            # is considered the default 
-if [ "$answer" != "${answer#[Yy]}" ]      # when just ENTER is pressed 
-then
-    echo Yes
-else
-    echo No
-fi
-
-Read line by line:
-while IFS= read -r line || [ -n "$line" ]
-do
-    printf '%s\n' "$line"
-done < "$filename"
-- Clear IFS to prevent leading/trailing whitespaces from being trimmed 
-- read always places the last line into the variable, but returns a 
-  nonzero status if no ending newline is found, thus || [ -n "$line" ] 
-  is necessary to make sure that the last line is gotten 
+- Don't confuse the "POSIX character class" with what is normally called a "regex character class". `[x-z0-9]` is an example of a "regex character class" which POSIX calls a "bracket expression". `[:digit:]` is a "POSIX character class", used inside a "bracket expression" like `[x-z[:digit:]]`.
 
 
 ### getopts
