@@ -4,7 +4,7 @@ This document is a reference guide for POSIX Shell programming. It is a bit more
 
 ## Table of contents <!-- omit from toc -->
 
-- [Introduction](#introduction)
+- [Basics](#basics)
   - [File extension and line ending](#file-extension-and-line-ending)
   - [Shebang line](#shebang-line)
   - [Default shell and management](#default-shell-and-management)
@@ -16,7 +16,7 @@ This document is a reference guide for POSIX Shell programming. It is a bit more
   - [Escaping](#escaping)
   - [Quotes](#quotes)
 - [Parameters](#parameters)
-  - [Parameter definition](#parameter-definition)
+  - [Introduction](#introduction)
   - [Variables](#variables)
   - [Single variable assignments](#single-variable-assignments)
   - [Multiple variable assignments](#multiple-variable-assignments)
@@ -77,7 +77,7 @@ This document is a reference guide for POSIX Shell programming. It is a bit more
   - [getopts](#getopts)
 
 
-## Introduction
+## Basics
 
 ### File extension and line ending
 
@@ -267,7 +267,7 @@ Quotes are not used to define a string. They are used to disable interpretation 
 
 ## Parameters
 
-### Parameter definition
+### Introduction
 
 A parameter is an entity that stores values and is referenced by a name, a number or a special symbol. Parameters referenced by a name are called variables. Parameters referenced by a number are called positional parameters. Parameters referenced by a special symbol are auto-set parameters. 
 
@@ -388,8 +388,7 @@ export -p         # to view the exported variables
 ### Built-in parameters
 
 ```bash
-$0                # Name of the shell script itself (not affected by shift)
-shift [n]         # Drop n positional parameters (default is 1)
+$0                # Name of the shell script (not affected by shift or set)
 $1..$9            # Positional parameters (command line or function)
 ${10}..           # More positional parameters
 $#                # The number of positional parameters without counting $0
@@ -404,17 +403,29 @@ $$                # Process id of the shell running the script, in a subshell
 $!                # Process id of the most recent background command
 ```
 
+**Manipulate positional parameters**
+
+```bash
+set --                     # Clear all
+set -- 'Item 1' 'Item 2'   # Set new ones
+set -- 'Item start' "$@"   # Add to start
+set -- "$@" 'Item end'     # Append to end
+shift [n]                  # Drop the first n (default is 1)
+```
+
+Note: `set` and `shift` called outside a function, will manipulate the positional parameters from the command line. When called inside a function, they will manipulate the positional parameters of that function.
+
 **Internal Field Separator**
 
-The characters of the `IFS` var are delimiters used to perform the word splitting (also called field splitting).
+The characters of the `IFS` variable are delimiters used to perform the word splitting (also called field splitting).
 
-- IFS whitespaces are any sequence of whitespace characters from the IFS var:
+- IFS whitespaces are any sequence of whitespace characters from the `IFS` variable:
   - IFS whitespaces are ignored at the beginning and end.
   - Adjacent IFS whitespaces are considered a single delimiter.
   - One non-IFS whitespace with adjacent IFS whitespaces are also considered a single delimiter.
-- IFS default is space + tab + newline (`unset IFS` to restore default).
-- If IFS is set to the empty var, no word splitting is happening.
-- To set IFS to a single newline:
+- `IFS` default is space + tab + newline (`unset IFS` to restore default).
+- Setting `IFS=` will disable the word splitting.
+- To set `IFS` to a single newline:
   
   ```bash
   nlx=$(printf '\nx')  # x needed because $(..) strips trailing newlines
@@ -473,7 +484,7 @@ $(cmds)         # Command substitution runs cmds in a subshell, the output
                 # Note: trailing newlines are removed from command output 
 ```
 
-**Precedence from highest to lowest:**
+**Precedence from highest to lowest**
 
 1. Redirection operators
 2. `|`
