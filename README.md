@@ -23,7 +23,7 @@ This document is a reference guide for POSIX Shell programming. It is a bit more
   - [Command after variable assignments](#command-after-variable-assignments)
   - [Parameter expansion](#parameter-expansion)
   - [Parameter expansion with default](#parameter-expansion-with-default)
-  - [Local vs. environment variables](#local-vs-environment-variables)
+  - [Local vs environment variables](#local-vs-environment-variables)
   - [Built-in parameters](#built-in-parameters)
 - [Commands](#commands)
   - [Simple command to list](#simple-command-to-list)
@@ -32,7 +32,7 @@ This document is a reference guide for POSIX Shell programming. It is a bit more
   - [wait](#wait)
 - [Flow control](#flow-control)
   - [if, while, until, for and case](#if-while-until-for-and-case)
-  - [: null command](#-null-command)
+  - [null command](#null-command)
   - [test](#test)
 - [Shell arithmetic](#shell-arithmetic)
 - [Functions](#functions)
@@ -41,8 +41,7 @@ This document is a reference guide for POSIX Shell programming. It is a bit more
 - [Advanced](#advanced)
   - [Command available?](#command-available)
   - [eval](#eval)
-  - [Arrays](#arrays)
-  - [Sourcing with . ./libraryname.sh](#sourcing-with--librarynamesh)
+  - [dot command](#dot-command)
   - [exec](#exec)
   - [trap](#trap)
 - [Manipulation](#manipulation)
@@ -372,7 +371,7 @@ Note: double-quotes prevent the word splitting and the pathname globbing from ha
 Note: `word` is subject to tilde expansion, parameter expansion, command substitution and arithmetic expansion (but not subject to word splitting and pathname globbing).
 
 
-### Local vs. environment variables
+### Local vs environment variables
 
 A sh variable can be either a local variable or an environment variable. They both work the same way; the only difference lies in what happens when the script runs another program. Environment variables are passed to subprocesses, local variables are not (by default variables are local).
 
@@ -589,7 +588,7 @@ Hint: `wait` only works for shell child processes, but it's possible to use `kil
   - `pattern` can contain unquoted globs used to match the given `word`.
 
 
-### : null command
+### null command
 
 ```bash
 if who | grep -q jane
@@ -778,65 +777,17 @@ eval [args]
 In simple terms with eval a given input is parsed twice. In detail, eval concatenates the arguments (which may have been expanded) with spaces, and then it instructs the shell to execute the result. The exit status of eval is the exit status of what has been run by the shell.
 
 
-### Arrays
+### dot command
 
-In POSIX there is no native array type, but there are different possibilities. To be coherent with the positional parameters and with tools like cut, sed, awk, sort, **one-based** indexing is used here.
-
-1. Space separated string (if elements have no spaces):
-
-   ```bash
-   array='0 1.3 4.2 6 8.7 16.2'           # init array
-   array='-1 '$array                      # add to start
-   array=$array' 32.1'                    # append to end
-   item=$(echo "$array" | cut -d' ' -f$i) # get item with index $i
-   for item in $array                     # loop array
-   do
-       printf '"%s"\n' "$item"
-   done
-   ```
-
-2. Using positional parameters (gives us only one array):
-
-   ```bash
-   set --                                 # clear all
-   set -- ./*                             # fill with files
-   set -- 'Item 1' 'Item 2' 'Item 3'      # add items (array is cleared)
-   set -- 'Item start' "$@"               # add to start
-   set -- "$@" 'Item end'                 # append to end
-   eval "item=\${$i}"                     # get item with index $i
-   shift 1                                # delete first item
-   for item in "$@"                       # loop array
-   do
-       printf '"%s"\n' "$item"
-   done
-   ```
-
-3. Using multiple shell variables:
-
-   ```bash
-   len=3 n=1
-   while [ $n -le $len ]                  # create items
-   do
-       eval "array$n=\"Item ${n}\""
-       n=$((n+1))
-   done
-   eval "item=\$array$i"                  # get item with index $i
-   n=1
-   while [ $n -le $len ]                  # loop array
-   do
-       eval "item=\$array$n"
-       printf '"%s"\n' "$item"
-       n=$((n+1))
-   done
-   ```
-
-### Sourcing with . ./libraryname.sh
+```bash
+. ./libraryname.sh
+```
 
 When a script is included with the dot command, it runs within the existing shell. Any variables created or modified by the script will remain available after it completes. In contrast, if a script is run normally, then a separate subshell (with a completely separate set of variables) is spawned to run the script. 
 
 - Libraries should have a `.sh` extension and should not be executable. The Shebang is not necessary, but for syntax highlighting and for ShellCheck it's better to have it.
 
-- In POSIX the dot command does not support passing arguments to the called script (pass them as vars).
+- In POSIX the dot command does not support passing arguments to the called script (pass them as variables).
 
 - `source` is a synonym for the dot command in bash, but not in POSIX.
 
@@ -1154,7 +1105,7 @@ echo 'hi  there!' | sed -E 's/([a-z]*)[[:space:]]+([a-z]*).*/\1 \2/g'
 ```
 
 - `sed` reads one line at a time and if a trailing newline is present, it removes it. When `sed` is done, it re-adds the trailing newline, but only if it was already there.
-- The character after `s` (substitute) is the delimiter; conventionally it is a slash, but you can take whatever is not in your strings.
+- The character after `s` (substitute) defines the delimiter; conventionally it is a slash, but you can take whatever is not in your strings.
 - Without `g` (global), `sed` only replaces the first occurrence on each line (leave the terminating slash because `sed` expects three delimiters).
 - Line range: `N,M` (one-based and `N,$` means `N` to end).
 - We can have any number of `&` (placeholder) in the replacement string.
