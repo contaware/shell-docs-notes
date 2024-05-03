@@ -435,7 +435,7 @@ The characters of the IFS variable are delimiters used to perform the word split
 
 ### Simple command to list
 
-- A simple command is a sequence of optional variable assignments followed by blank-separated words and redirections (in simple commands the redirections can also be placed at the beginning).
+- A simple command is a sequence of optional variable assignments followed by blank-separated words. Redirections can appear anywhere in a simple command.
 - Pipelines are commands combined by pipes that connect the output of the preceding command with the input of the next command.
 - A list is a series of pipelines separated by `&  ;  &&  ||` and terminated by `&  ;  newline`
 - If a command returns a zero exit status, the condition is true, otherwise, it is false. By calling `exit n` (n is optional and defaults to zero) a script exits with code n. There are two programs called `true` and `false`, they return respectively with a zero exit status and with a non-zero exit status.
