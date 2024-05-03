@@ -82,7 +82,7 @@ This document is a reference guide for POSIX Shell programming. It is a bit more
 
 - Shell scripts should have no extension or a `.sh` extension.
 
-- Shell scripts are text files which **must** use the Unix style line ending, that's a single line feed (LF).
+- Shell scripts are text files which **must** use the Unix style line ending, that's a single line feed (LF). In shell programming a newline is a LF.
 
 
 ### Shebang line
@@ -112,7 +112,7 @@ or
 ```bash
 cat /etc/shells   # see all installed shells
 echo $SHELL       # print default login shell
-chsh              # see/change default login shell (logout & log back in)
+chsh              # see/change default login shell
 ```
 
 
@@ -138,7 +138,7 @@ chsh              # see/change default login shell (logout & log back in)
   ```
 
   - The provided args are handed over to the new shell in `$0`, `$1`, `$2`, ...
-  - `"arg0"` is often set to `--` or `sh`.
+  - `"arg0"` is often set to `--` or `sh`
 
 
 ### echo vs printf
@@ -258,10 +258,9 @@ Quotes are not used to define a string. They are used to disable interpretation 
 
 - Double-quotes are weak quotes, they treat most characters as literal characters, but a few of them have a special meaning:
 
-  1. Within double-quotes ``$ ${..} $(..) `..` $((..))`` are interpreted like without quotes, but with the difference that word splitting and pathname globbing do not happen. Moreover the surrounding double-quotes do not conflict with eventual quotes inside of ``${..} $(..) `..` $((..))``.
+  1. Within double-quotes ``$ ${..} $(..) `..` $((..))`` are interpreted like without quotes, but with the difference that word splitting and pathname globbing do not happen. Moreover the surrounding double-quotes do not conflict with eventual quotes inside of ``${..} $(..) `..` $((..))``
 
-  2. Within double-quotes the backslash becomes an escape character only if the character following is one of ``$  `  "  \``.  
-     Also here, like for the unquoted case, a newline following a backslash is a line continuation (both characters are removed).
+  2. Within double-quotes the backslash becomes an escape character only if one of these ``$  `  "  \`` follow. Also here, like for the unquoted case, a newline following a backslash is a line continuation (both characters are removed).
 
 
 ## Parameters
@@ -356,13 +355,13 @@ Note: double-quotes prevent the word splitting and the pathname globbing from ha
 
 ### Parameter expansion with default
 
-- If `var` is unset or empty, the expansion of word is substituted:
+- If `var` is unset or empty, the expansion of `word` is substituted:
 
   ```bash
   ${var:-word}
   ```
 
-- If `var` is unset or empty, the expansion of word is assigned to var. The value of var is then substituted:
+- If `var` is unset or empty, the expansion of `word` is assigned to var. The value of `var` is then substituted:
 
   ```bash
   ${var:=word}
@@ -393,7 +392,7 @@ ${10}..           # More positional parameters
 $#                # The number of positional parameters without counting $0
                   # ($# gets updated with each shift call)
 $* and $@         # Positional parameters placed one after the other and 
-                  # subject to word splitting
+                  # subject to word splitting and pathname globbing
 "$*"              # Expands to "$1c$2c..." with c being the first char of IFS
 "$@"              # Expands to "$1" "$2" ...
 $?                # Return exit status of the last command or of a function
@@ -416,20 +415,21 @@ Note: `set` and `shift` called outside a function, will manipulate the positiona
 
 **Internal Field Separator**
 
-The characters of the `IFS` variable are delimiters used to perform the word splitting (also called field splitting).
+The characters of the IFS variable are delimiters used to perform the word splitting (also called field splitting).
 
-- IFS whitespaces are any sequence of whitespace characters from the `IFS` variable:
+- IFS whitespaces are any sequence of whitespace characters from the IFS variable:
   - IFS whitespaces are ignored at the beginning and end.
   - Adjacent IFS whitespaces are considered a single delimiter.
   - One non-IFS whitespace with adjacent IFS whitespaces are also considered a single delimiter.
-- `IFS` default is space + tab + newline (`unset IFS` to restore default).
-- Setting `IFS=` will disable the word splitting.
-- To set `IFS` to a single newline:
+- IFS default is space + tab + newline (`unset IFS` to restore default).
+- Setting IFS to empty/null will disable the word splitting: `IFS=`
+- To set IFS to a single newline:
   
   ```bash
   nlx=$(printf '\nx')  # x needed because $(..) strips trailing newlines
   IFS=${nlx%x}         # remove the above added x and assign to IFS
   ```
+
 
 ## Commands
 
@@ -437,50 +437,50 @@ The characters of the `IFS` variable are delimiters used to perform the word spl
 
 - A simple command is a sequence of optional variable assignments followed by blank-separated words and redirections (in simple commands the redirections can also be placed at the beginning).
 - Pipelines are commands combined by pipes that connect the output of the preceding command with the input of the next command.
-- A list is a series of pipelines separated by  `&  ;  &&  ||` and terminated by `&  ;  newline`.
+- A list is a series of pipelines separated by `&  ;  &&  ||` and terminated by `&  ;  newline`
 - If a command returns a zero exit status, the condition is true, otherwise, it is false. By calling `exit n` (n is optional and defaults to zero) a script exits with code n. There are two programs called `true` and `false`, they return respectively with a zero exit status and with a non-zero exit status.
 - The exit status of a series of commands is that of the last simple command executed.
 - The exit status of a variable assignment alone is that of the last substituted command, or zero if there are no command substitutions.
 
 ```bash
-! pipeline      # Negates the exit code of the whole pipeline. Being a 
-                # reserved word, it must be separated by a space. It 
-                # returns an exit status of 0 if the pipeline exited 
-                # non-zero, and an exit status of 1, if the pipeline 
-                # exited zero
-cmd1 | cmd2     # Output of cmd1 is piped into cmd2
-[n]> file       # Output from n is redirected to file, by default 
-                # n is 1 (stdout), in that case the 1 can be omitted
->/dev/null 2>&1 # 1 goes to null and 2 (stderr) goes to what 1 refers to 
-                # at this moment (that's null). The order of these two 
-                # redirections matters here 
-[n]>> file      # Output from n appended to file 
-                # (n can be omitted if it is 1)
-[n]< file       # Input from file into n, by default n is 0 (stdin), 
-                # in that case the 0 can be omitted
-[n]<< ENDTXT    # Redirect into n from current script point until ENDTXT 
-                # $ ${..} $(..) $((..)) are interpreted
-                # (n can be omitted if it is 0)
-[n]<< 'ENDTXT'  # Redirect into n from current script point until ENDTXT 
-                # $ ${..} $(..) $((..)) are NOT interpreted
-                # (n can be omitted if it is 0)
-cmd1 && cmd2    # Execute cmd1. Then, if it exited with a zero exit status 
-                # (true), execute cmd2
-cmd1 || cmd2    # Execute cmd1. Then, if it exited with a non-zero exit 
-                # status (false), execute cmd2
-cmd1; cmd2      # Do cmd1 and then cmd2
-cmd1 & cmd2     # Do cmd1, start cmd2 without waiting for cmd1 to finish
-                # (see Background commands)
-{ cmds; }       # Group cmds, the last semicolon is required because cmds
-                # is a list, and the first curly bracket must be separated 
-                # by a space because it is a reserved word. Often used to 
-                # change precedence 
-(cmds)          # Run cmds in a subshell, blocks until subshell is done
-$(cmds)         # Command substitution runs cmds in a subshell, the output 
-                # replaces $(cmds). $(cmds) is supported in POSIX shells 
-                # and must be preferred over the obsolete `cmds` syntax 
-                # which has nesting problems 
-                # Note: trailing newlines are removed from command output 
+! pipeline       # Negates the exit code of the whole pipeline. Being a 
+                 # reserved word, it must be separated by a space. It 
+                 # returns an exit status of 0 if the pipeline exited 
+                 # non-zero, and an exit status of 1, if the pipeline 
+                 # exited zero
+cmd1 | cmd2      # Output of cmd1 is piped into cmd2
+[n]> file        # Output from n is redirected to file, by default 
+                 # n is 1 (stdout), in that case the 1 can be omitted
+>/dev/null 2>&1  # 1 goes to null and 2 (stderr) goes to what 1 refers to 
+                 # at this moment (that's null). The order of these two 
+                 # redirections matters here 
+[n]>> file       # Output from n appended to file 
+                 # (n can be omitted if it is 1)
+[n]< file        # Input from file into n, by default n is 0 (stdin), 
+                 # in that case the 0 can be omitted
+[n]<< ENDTXT     # Redirect into n from current script point until ENDTXT 
+                 # $ ${..} $(..) $((..)) are interpreted
+                 # (n can be omitted if it is 0)
+[n]<< 'ENDTXT'   # Redirect into n from current script point until ENDTXT 
+                 # $ ${..} $(..) $((..)) are NOT interpreted
+                 # (n can be omitted if it is 0)
+cmd1 && cmd2     # Execute cmd1. Then, if it exited with a zero exit status 
+                 # (true), execute cmd2
+cmd1 || cmd2     # Execute cmd1. Then, if it exited with a non-zero exit 
+                 # status (false), execute cmd2
+cmd1; cmd2       # Do cmd1 and then cmd2
+cmd1 & cmd2      # Do cmd1, start cmd2 without waiting for cmd1 to finish
+                 # (see Background commands)
+{ cmds; }        # Group cmds, the last semicolon is required because cmds
+                 # is a list, and the first curly bracket must be separated 
+                 # by a space because it is a reserved word. Often used to 
+                 # change precedence 
+(cmds)           # Run cmds in a subshell, blocks until subshell is done
+$(cmds)          # Command substitution runs cmds in a subshell, the output 
+                 # replaces $(cmds). $(cmds) is supported in POSIX shells 
+                 # and must be preferred over the obsolete `cmds` syntax 
+                 # which has nesting problems 
+                 # Note: trailing newlines are removed from command output 
 ```
 
 **Precedence from highest to lowest**
@@ -488,7 +488,7 @@ $(cmds)         # Command substitution runs cmds in a subshell, the output
 1. Redirection operators
 2. `|`
 3. `&&  ||` (both carry equal precedence)
-4. `;  &`   (both carry equal precedence)
+4. `;  &` (both carry equal precedence)
 
 Hint: a signal 13 termination means that something is written to a pipe, but nothing is read. It often happens when a `head` command already got all the input it wants and closed its input pipe, while the source command is still writing into its output pipe. To hide the message, add `2>/dev/null` to the source command.
 
@@ -514,7 +514,7 @@ sleep 1000 &
 A job is a process that the shell manages:
 
 - `jobs` to see the running background jobs with their job number. 
-- `fg %n` to move the job to foreground (re-started if stopped).
+- `fg %n` moves the job to foreground (re-started if stopped).
 - `bg %n` re-starts a stopped background job.
 - `Ctrl+Z` to put a running job into background stopping it.
 - `kill %n` kills the given job.
@@ -531,7 +531,7 @@ wait [PIDs]
 - Without arguments it waits until all child processes terminate (wait exits with a zero exit status).
 - If PIDs are given, it waits until all listed processes have terminate (wait exits with the exit status of the last listed PID).
  
-Hint: `wait` only works for shell child processes, but it's possible to use `kill` to poll for the existence of an arbitrary process: `kill -0 $pid`.
+Hint: `wait` only works for shell child processes, but it's possible to use `kill` to poll for the existence of an arbitrary process: `kill -0 $pid`
 
 
 ## Flow control
@@ -554,7 +554,7 @@ Hint: `wait` only works for shell child processes, but it's possible to use `kil
   ```
 
   - `list` must be terminated by `;` or a newline.
-  - May contain `break` and `continue`.
+  - May contain `break` and `continue`
 
 
 - until-loop (like while but test is inverted):
@@ -564,7 +564,7 @@ Hint: `wait` only works for shell child processes, but it's possible to use `kil
   ```
 
   - `list` must be terminated by `;` or a newline.
-  - May contain `break` and `continue`.
+  - May contain `break` and `continue`
 
 
 - for-loop:
@@ -574,8 +574,8 @@ Hint: `wait` only works for shell child processes, but it's possible to use `kil
   ```
   
   - `words` and `list` must be terminated by `;` or a newline.
-  - Short form of `for varname in "$@"` is `for varname`.
-  - May contain `break` and `continue`.
+  - Short form of `for varname in "$@"` is `for varname`
+  - May contain `break` and `continue`
 
 
 - case-construct:
@@ -585,7 +585,7 @@ Hint: `wait` only works for shell child processes, but it's possible to use `kil
   ```
 
   - `word` and `pattern` not subject to word splitting and pathname globbing.
-  - `pattern` can contain unquoted globs used to match the given `word`.
+  - `pattern` can contain unquoted globs used to match the given `word`
 
 
 ### null command
@@ -604,8 +604,7 @@ Note: both `:` and `true` return 0, for code clarity a good habit is to use `:` 
 
 ### test
 
-`[` and `test` are almost the same command, the only difference is that `[` expects its last argument to be `]`.
-As `[` is actually a command, it's necessary to add a space after `[` and also before `]` because that's the last argument of `[`.
+`[` and `test` are almost the same command, the only difference is that `[` expects its last argument to be `]`. As `[` is actually a command, it's necessary to add a space after `[` and also before `]` because that's the last argument of `[`.
 
 Check files:
 
@@ -645,9 +644,9 @@ $num -ge 2      # check whether num >= 2
 
 Negate and combine:
 
-- To negate an expression use ! (needs a space after it). It can also be placed outside the test command (pipeline negation).
+- To negate an expression use `!` (needs a space after it). It can also be placed outside the test command (pipeline negation).
 
-- To combine expressions do not use the obsolete `-a` (and) and `-o` (or) options, instead use two tests combined with `&&` and `||`.
+- To combine expressions do not use the obsolete `-a` (and) and `-o` (or) options, instead use two tests combined with `&&` and `||`
 
 - For grouping do not use test command's obsolete `\( \)`, instead implement multiple tests in braces like:
 
@@ -713,8 +712,8 @@ echo $result
 ```
 
 - Except for `$1`, `$2`, ... which contain the arguments passed to the function, all script variables can be read and written.
-- Use `return n` to end the function, the returned value can be read with `$?`. The exit status of the last command is returned when no `return` is specified or when `n` is not given after `return`.
-- `echo` in function does write to stdout, that can be caught with `$(..)`. 
+- Use `return [n]` to end the function, the returned value can be read with `$?`. The exit status of the last command is returned when no `return` is specified or when `n` is not given after `return`
+- `echo` in function does write to stdout, that can be caught with `$(..)`
 
 
 ## Tilde expansion
@@ -734,24 +733,24 @@ echo $result
 Unquoted globs:
 
 - `*` matches 0 or more characters.
-- `foo*` matches any string beginning with foo.
+- `foo*` matches any string beginning with `foo`
 - `*x*` matches any string containing an `x` (begin, middle or end).
-- `*.tar.gz` matches any string ending with `.tar.gz`.
+- `*.tar.gz` matches any string ending with `.tar.gz`
 - `?` matches 1 character.
 - `[AaBbCc]` matches 1 character from the list.
 - `[!RGB]` matches 1 character not in the list.
 - `[a-g]` matches 1 character from the range.
-- `[CHARCLASS]` matches 1 character from the given POSIX character class, for examples: `[[:space:]]` or `[![:space:]]`.
+- `[CHARCLASS]` matches 1 character from the given [POSIX character class](#posix-character-classes), for examples: `[[:space:]]` or `[![:space:]]`
 
 Pathname expansion has additional rules:
 
-1. Non-matching globs are expanded to themselves, always test a match for existence with `-e`.
+1. **Non-matching globs are expanded to themselves**, always `test` a match for existence with `-e`
 2. Glob patterns do not match slashes and do not cross the slashes that separate pathname components.
 3. Even if a filename contains spaces, tabs, newlines, quotes, the expansion of a glob that matches that filename will still preserve each filename as a single word.
-4. Filenames beginning with a dot can only be matched by patterns that also start with a dot. To not match current dir and parent dir use `.[!.]* ..?*`.
+4. Filenames beginning with a dot can only be matched by patterns that also start with a dot. To match dot files/directories excluding `.` and `..` use: `.[!.]* ..?*`
 5. A glob that ends in `/` will only match directories, the `/` will be included in the result.
 
-Important: always use `./*` instead of `*` so that filenames with dashes won't become options!
+Important: always use `./*` instead of `*` so that filenames starting with a hyphen won't become options!
 
 
 ## Advanced
@@ -774,7 +773,7 @@ fi
 eval [args]
 ```
 
-In simple terms with eval a given input is parsed twice. In detail, eval concatenates the arguments (which may have been expanded) with spaces, and then it instructs the shell to execute the result. The exit status of eval is the exit status of what has been run by the shell.
+In simple terms with `eval` a given input is parsed twice. In detail, `eval` concatenates the arguments (which may have been expanded) with spaces, and then it instructs the shell to execute the result. The exit status of `eval` is the exit status of what has been run by the shell.
 
 
 ### dot command
@@ -800,7 +799,7 @@ exec [cmd [args]] [redirections]
 
 - If `cmd` is specified, `exec` replaces the shell with `cmd`, without creating a new process, thus the commands following the `exec` line will be ignored.
 
-- If `cmd` is not specified, any redirections take effect in the current shell. The redirections can be used to open, close or copy file descriptors (abbreviated with fd):
+- If `cmd` is not specified, any redirections take effect in the current shell. The redirections can be used to open, close or copy a fd (file descriptor):
 
   ```bash
   exec 3< file    # open file as fd 3 for reading
@@ -819,16 +818,16 @@ trap action signals
 ```
 
 - `action`: 
-  - a `-` as an action resets each given signal to its default action.
-  - a function as an action is called for the given signals.
-  - commands as an action are executed for the given signals:
+  - A hyphen as an action resets each given signal to its default action.
+  - A function as an action is called for the given signals.
+  - Commands as an action are executed for the given signals:
     1. If the commands are placed in double-quotes all expansions will happen when the trap is defined.
     2. If the commands are placed in single-quotes all expansions will happen when the trap is executed.
 
 - `signals` (space separated):
-  - `INT` (2) sent when the user presses `Ctrl+C`.
+  - `INT` (2) sent when the user presses `Ctrl+C`
   - `TERM` (15) default kill signal (sent when you call `kill`).
-  - `HUP` (1) hang up is sent when a user disconnects from the terminal, it has about the same harshness as `TERM`.
+  - `HUP` (1) hang up is sent when a user disconnects from the terminal, it has about the same harshness as `TERM`
   - `QUIT` (3) harshest of the ignorable signals.
   - `EXIT` (0) sent when the script exits at the end or with the exit command.
   - `KILL` (9) signal **cannot** be handled with a trap.
@@ -847,7 +846,7 @@ basename 'path'
 ```
 
 - Trailing slash is trimmed from the given path and then the rightmost part of that is printed.
-- If path is `/` then `basename` returns `/`.
+- If path is `/` then `basename` returns `/`
 
 #### dirname
 
@@ -856,7 +855,7 @@ dirname 'path'
 ```
 
 - It's the complement of `basename`, it prints what `basename` does not print, but with the trailing slash trimmed.
-- If path is `/` then `dirname` returns `/`.
+- If path is `/` then `dirname` returns `/`
 
 #### Make temporary file/directory
 
@@ -882,14 +881,14 @@ mktemp
 #### Count characters
 
 ```bash
-wc -m              # -c counts the bytes
-str_length=${#var} # some older shells return bytes instead of chars
+wc -m               # -c counts the bytes
+str_length=${#var}  # some older shells return bytes instead of chars
 ```
 
 #### Print numeric sequence
 
 ```bash
-seq -s ' ' FIRST LAST
+seq -s ', ' 1 10    # from 1 to 10 with given separator
 ```
 
 #### Concatenate strings
@@ -913,7 +912,7 @@ noprefix=${var##word}    # remove largest prefix match
 nosuffix=${var%%word}    # remove largest suffix match
 ```
 
-- Hint: place `word` in quotes to prevent glob characters in it from being used to match the content of `var`.
+- Hint: place `word` in quotes to prevent glob characters in it from being used to match the content of `var`
 
 #### tr (operate on character sets)
 
@@ -1025,15 +1024,15 @@ done < "$filename"
 diff left right
 ```
 
-- `-C N` outputs N-lines of context output, `-c` is the short form for `-C 3`.
-- `-U N` outputs N-lines of unified context output, `-u` is the short form for `-U 3`.
+- `-C N` outputs N-lines of context output, `-c` is the short form for `-C 3`
+- `-U N` outputs N-lines of unified context output, `-u` is the short form for `-U 3`
 - Exit status of 0 if no differences found.
 
 In the traditional output format (which is the default), the `<` and `>` signs indicate which file the lines appear in, `a` stands for added, `d` for deleted, `c` for changed, `L` is the left file line range and `R` is the right file line range:
 
-- `LaR` means add after line `L` the lines from `R` range.
-- `LcR` means change `L` range with `R` range.
-- `LdR` means delete `L` range (if not deleted they would have appeared after line `R`).
+1. `LaR` means add after line `L` the lines from `R` range.
+2. `LcR` means change `L` range with `R` range.
+3. `LdR` means delete `L` range (if not deleted they would have appeared after line `R`).
 
 The traditional format is hard to read because we do not see the context around the changes. The context format shows the change hunks with some lines above and below. The unified format also shows the context, but the left and right changes are interleaved.
 
@@ -1084,12 +1083,12 @@ awk '(NR % 2) == 0'           # even records
 ```
 
 - Fields are columns of data and records are rows of data; one-based indexing is used.
-- awk strings must be enclosed in double-quotes, not in single-quotes (single-quotes have no special meaning in awk).
-- awk concatenates strings, numbers or variables when placing them next to one another (sometimes a space may be required to distinguish them).
-- Variables in awk are assigned like in shell, but used without the dollar sign. The dollar sign is to read/write the fields.
-- Use multiple `-v` options to set awk variables.
-- `-v FS=' '` **input field separator** can be a single character or an extended regular expression. The default is a single space which has a special meaning for awk: leading/trailing whitespaces are ignored and fields are separated at chains of contiguous whitespaces. If just a literal space is wished as separator, then it has to be specified as character class: `FS='[ ]'`. A multi-space/tab separator could be: `FS='[ ]{2,}|\t'`. For `FS=` the behavior is unspecified. `-F ' '` is an alias.
-- `-v RS='\n'` **input record separator** must be a single character, default is a newline. If `FS` and `RS` are the same, `RS` wins, that's because awk needs to determine the record first, then it can break the record into fields. With `RS=` (paragraph mode) records are separated by one or more empty lines and leading/trailing empty lines are ignored.
+- `awk` strings must be enclosed in double-quotes, not in single-quotes (single-quotes have no special meaning in `awk`).
+- `awk` concatenates strings, numbers or variables when placing them next to one another (sometimes a space may be required to distinguish them).
+- Variables in `awk` are assigned like in shell, but used without the dollar sign. The dollar sign is to read/write the fields.
+- Use multiple `-v` options to set `awk` variables.
+- `-v FS=' '` **input field separator** can be a single character or an extended regular expression. The default is a single space which has a special meaning for `awk`: leading/trailing whitespaces are ignored and fields are separated at chains of contiguous whitespaces. If just a literal space is wished as separator, then it has to be specified as character class: `FS='[ ]'`. A multi-space/tab separator could be: `FS='[ ]{2,}|\t'`. For `FS=` the behavior is unspecified. `-F ' '` is an alias.
+- `-v RS='\n'` **input record separator** must be a single character, default is a newline. If `FS` and `RS` are the same, `RS` wins, that's because `awk` needs to determine the record first, then it can break the record into fields. With `RS=` (paragraph mode) records are separated by one or more empty lines and leading/trailing empty lines are ignored.
 - `-v OFS=' '` **output field separator** can be a string, default is a single space.
 - `-v ORS='\n'` **output record separator** can be a string, default is a newline.
 
@@ -1099,7 +1098,7 @@ awk '(NR % 2) == 0'           # even records
 ```bash
 echo 'This is the OldString' | sed 'N,M s/OldString/NewString/g'
 sed 's/OldString/NewString/g' input.txt
-echo 'hi!' | sed 's/.$//'       # removes the last char
+echo 'hi!' | sed 's/.$//'     # removes the last char
 echo 'These are 12 34 2140' | sed 's/[0-9]/N/g'
 echo 'hi  there!' | sed -E 's/([a-z]*)[[:space:]]+([a-z]*).*/\1 \2/g'
 ```
@@ -1114,7 +1113,11 @@ echo 'hi  there!' | sed -E 's/([a-z]*)[[:space:]]+([a-z]*).*/\1 \2/g'
 - `-E` is for extended regular expression, for example if needing `+ ? |`
 
 ### POSIX character classes
- 
+
+Don't confuse the POSIX character class with what is normally called a "regex character class". `[x-z0-9]` is an example of a "regex character class" which POSIX calls a "bracket expression". `[:digit:]` is a **POSIX character class**, used inside a "bracket expression" like `[x-z[:digit:]]`
+
+In regex use POSIX character classes like:
+
 ```bash
 [[:space:]] instead of \s (space, tab, newline, carriage return)
 [[:blank:]] space and tab
@@ -1126,12 +1129,10 @@ echo 'hi  there!' | sed -E 's/([a-z]*)[[:space:]]+([a-z]*).*/\1 \2/g'
 [[:upper:]] instead of [A-Z]
 ```
 
-- Don't confuse the "POSIX character class" with what is normally called a "regex character class". `[x-z0-9]` is an example of a "regex character class" which POSIX calls a "bracket expression". `[:digit:]` is a "POSIX character class", used inside a "bracket expression" like `[x-z[:digit:]]`.
-
 
 ### getopts
 
-According to POSIX, options are single alphanumeric characters preceded by a hyphen, they can have an optional option-argument following it separated by optional whitespaces. Multiple options may follow a hyphen if the options do not take option-arguments. After the options, non-option arguments, also called operands, may follow. `getopts` supports the POSIX guideline of explicitly marking the end of the options with the `--` delimiter. It is not mandatory to provide this double-dash, just make sure that the first non-option argument does not start with a hyphen. For example, if this first non-option argument is a glob, then there is a chance that the first expanded filename starts with a hyphen.  
+According to POSIX, options are single alphanumeric characters preceded by a hyphen, they can have an optional option-argument following it separated by optional whitespaces. Multiple options may follow a hyphen if the options do not take option-arguments. After the options, non-option arguments, also called operands, may follow. `getopts` supports the POSIX guideline of explicitly marking the end of the options with the `--` delimiter. It is not mandatory to provide `--`, just make sure that the first non-option argument does not start with a hyphen. For example, if this first non-option argument is a glob, then there is a chance that the first expanded filename starts with a hyphen.  
 Note: bear in mind that not all UNIX commands support the `--` convention.
 
 ```bash
