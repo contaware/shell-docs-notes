@@ -490,7 +490,13 @@ $(cmds)          # Command substitution runs cmds in a subshell, the output
 3. `&&  ||` (both carry equal precedence)
 4. `;  &` (both carry equal precedence)
 
-Hint: a signal 13 termination means that something is written to a pipe, but nothing is read. It often happens when a `head` command already got all the input it wants and closed its input pipe, while the source command is still writing into its output pipe. To hide the message, add `2>/dev/null` to the source command.
+**Redirecting and piping binary data**
+
+As long as the involved tools support binary data, it is safe to pipe or redirect binary data. For example `cat` and `split -b` are both binary capable.
+
+**Signal 13 termination**
+
+A signal 13 termination means that something is written to a pipe, but nothing is read. It often happens when a `head` command already got all the input it wants and closed its input pipe, while the source command is still writing into its output pipe. To hide the message, add `2>/dev/null` to the source command.
 
 
 ### Compound commands
