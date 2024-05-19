@@ -131,7 +131,7 @@ chsh              # see/change default login shell
   Hint: the above options can also be added to the Shebang.
 
 
-- Start a new shell executing the given command:
+- Start a child shell that executes the given cmd, and then wait until it's done:
   
   ```bash
   sh -c 'cmd "$1" "$2"' "arg0" "arg1" "arg2"
@@ -372,7 +372,7 @@ Note: `word` is subject to tilde expansion, parameter expansion, command substit
 
 ### Local vs environment variables
 
-A sh variable can be either a local variable or an environment variable. They both work the same way; the only difference lies in what happens when the script runs another program. Environment variables are passed to subprocesses, local variables are not (by default variables are local).
+A sh variable can be either a local variable or an environment variable. They both work the same way; the only difference lies in what happens when the script runs another program/script. Environment variables are passed to sub processes/child processes/child shells, local variables are not (by default variables are local).
 
 ```bash
 export VAR        # make VAR an environment variable
@@ -396,8 +396,8 @@ $* and $@         # Positional parameters placed one after the other and
 "$*"              # Expands to "$1c$2c..." with c being the first char of IFS
 "$@"              # Expands to "$1" "$2" ...
 $?                # Return exit status of the last command or of a function
-$$                # Process id of the shell running the script, in a subshell 
-                  # $$ is not updated, it returns the parent's PID
+$$                # Process id of the shell running the script
+                  # (in a subshell $$ remains the same)
 $!                # Process id of the most recent background command
 ```
 
@@ -475,7 +475,9 @@ cmd1 & cmd2      # Do cmd1, start cmd2 without waiting for cmd1 to finish
                  # is a list, and the first curly bracket must be separated 
                  # by a space because it is a reserved word. Often used to 
                  # change precedence 
-(cmds)           # Run cmds in a subshell, blocks until subshell is done
+(cmds)           # Run cmds in a subshell, block until done. A subshell is a
+                 # shell execution environment that gets a copy of local vars
+                 # and functions (changes to the vars are not reflected back)
 $(cmds)          # Command substitution runs cmds in a subshell, the output 
                  # replaces $(cmds). $(cmds) is supported in POSIX shells 
                  # and must be preferred over the obsolete `cmds` syntax 
@@ -788,7 +790,7 @@ In simple terms with `eval` a given input is parsed twice. In detail, `eval` con
 . ./libraryname.sh
 ```
 
-When a script is included with the dot command, it runs within the existing shell. Any variables created or modified by the script will remain available after it completes. In contrast, if a script is run normally, then a separate subshell (with a completely separate set of variables) is spawned to run the script. 
+When a script is included with the dot command, it runs within the existing shell. Any variables created or modified by the script will remain available after it completes. In contrast, if a script is run normally, then a child shell (with a completely separate set of variables) is spawned to run the script. 
 
 - Libraries should have a `.sh` extension and should not be executable. The Shebang is not necessary, but for syntax highlighting and for ShellCheck it's better to have it.
 
