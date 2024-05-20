@@ -2,6 +2,9 @@
 
 This document is a reference guide for POSIX Shell programming. It is a bit more than a simple cheat sheet, but it is not a learning book, you need to have some knowledge and experience about Shell programming to understand these notes.
 
+The documents are licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), while the files in the `examples` directory are licensed under [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/).
+
+
 ## Table of contents <!-- omit from toc -->
 
 - [Basics](#basics)
