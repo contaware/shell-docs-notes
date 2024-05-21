@@ -1,6 +1,6 @@
 # diff
 
-diff is a line-oriented tool which displays the differences between the contents of two files. 
+`diff` is a line-oriented tool which displays the differences between the contents of two files. 
 
 ```bash
 diff left right

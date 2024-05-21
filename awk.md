@@ -1,8 +1,8 @@
 # awk
 
-The awk (abbreviation of the developers Aho, Weinberger and Kernighan) tool processes text files dividing them first in rows and then in columns.
+The `awk` (abbreviation of the developers Aho, Weinberger and Kernighan) tool processes text files dividing them first in rows and then in columns.
 
-An awk script is a series of condition-action pairs, where the condition is typically an expression and action is a sequence of commands. Either a condition or an action can be implied, an empty condition is considered true and a missing action defaults to print.
+An `awk` script is a series of condition-action pairs, where the condition is typically an expression and action is a sequence of commands. Either a condition or an action can be implied, an empty condition is considered true and a missing action defaults to print.
 
 ```bash
 awk 'cond1{action1;action2}cond2{action3;action4}' input.txt
