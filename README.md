@@ -71,10 +71,7 @@ All the documents are licensed under [CC BY-SA 4.0](https://creativecommons.org/
     - [Read input](#read-input)
     - [User input](#user-input)
     - [Read line by line](#read-line-by-line)
-  - [diff](#diff)
   - [cut](#cut)
-  - [awk](#awk)
-  - [sed](#sed)
   - [POSIX character classes](#posix-character-classes)
   - [getopts](#getopts)
 
@@ -1029,27 +1026,6 @@ done < "$filename"
 - `read` always places the last line into the variable, but returns a nonzero status if no ending newline is found, thus `|| [ -n "$line" ]` is necessary to make sure that the last line is gotten.
 
 
-### diff
-
-```bash
-diff left right
-```
-
-- `-C N` outputs N-lines of context output, `-c` is the short form for `-C 3`
-- `-U N` outputs N-lines of unified context output, `-u` is the short form for `-U 3`
-- Exit status of 0 if no differences found.
-
-In the traditional output format (which is the default), the `<` and `>` signs indicate which file the lines appear in, `a` stands for added, `d` for deleted, `c` for changed, `L` is the left file line range and `R` is the right file line range:
-
-1. `LaR` means add after line `L` the lines from `R` range.
-2. `LcR` means change `L` range with `R` range.
-3. `LdR` means delete `L` range (if not deleted they would have appeared after line `R`).
-
-The traditional format is hard to read because we do not see the context around the changes. The context format shows the change hunks with some lines above and below. The unified format also shows the context, but the left and right changes are interleaved.
-
-Note: traditional format and context format use `start-line,end-line` ranges, while the unified format uses `start-line,count` ranges.
-
-
 ### cut
 
 ```bash
@@ -1070,58 +1046,6 @@ echo 'Hello World!' | rev | cut -c 2- | rev
 - `rev` does not reverse the ending newline.
 - `rev` does not append a newline if it is not present.
 
-
-### awk
-
-```bash
-awk 'cond1{action1;action2}cond2{action3;action4}' input.txt
-awk 'BEGIN {print "START"}'   # BEGIN is run before any records are read
-awk 'END {print "STOP"}'      # END is run after the last record is read
-awk '{print $1}'              # print first field
-awk '{print $1 $3}'           # print fields 1 and 3 with no separation
-awk '{print $1,$3}'           # print fields 1 and 3 separated by OFS
-awk '{print $(NF-1),$NF}'     # print second last and last fields
-awk '{print NR":"NF,$0}'      # record num and num of fields in record
-awk '{print}'                 # print all with FS (same as print $0)
-awk '{$1=$1; print}'          # print all with OFS
-                              # ($1=$1 forces rebuilding the record)
-awk '{action with no print}1' # 1 is true and default action is print
-awk '{$2="new" OFS $2}1'      # insert a field in second position
-awk '{$(NF+1)=$1+$2}1'        # append a field which is the sum $1+$2
-awk '{for(i=3;i<NF;i++)printf "%s%s",$i,OFS;print $NF}' # fields range
-awk 'NR>1 && NR<=3'           # records range
-awk '(NR % 2) == 0'           # even records
-```
-
-- Fields are columns of data and records are rows of data; one-based indexing is used.
-- `awk` strings must be enclosed in double-quotes, not in single-quotes (single-quotes have no special meaning in `awk`).
-- `awk` concatenates strings, numbers or variables when placing them next to one another (sometimes a space may be required to distinguish them).
-- Variables in `awk` are assigned like in shell, but used without the dollar sign. The dollar sign is to read/write the fields.
-- Use multiple `-v` options to set `awk` variables.
-- `-v FS=' '` **input field separator** can be a single character or an extended regular expression. The default is a single space which has a special meaning for `awk`: leading/trailing whitespaces are ignored and fields are separated at chains of contiguous whitespaces. If just a literal space is wished as separator, then it has to be specified as character class: `FS='[ ]'`. A multi-space/tab separator could be: `FS='[ ]{2,}|\t'`. For `FS=` the behavior is unspecified. `-F ' '` is an alias.
-- `-v RS='\n'` **input record separator** must be a single character, default is a newline. If `FS` and `RS` are the same, `RS` wins, that's because `awk` needs to determine the record first, then it can break the record into fields. With `RS=` (paragraph mode) records are separated by one or more empty lines and leading/trailing empty lines are ignored.
-- `-v OFS=' '` **output field separator** can be a string, default is a single space.
-- `-v ORS='\n'` **output record separator** can be a string, default is a newline.
-
-
-### sed
-
-```bash
-echo 'This is the OldString' | sed 'N,M s/OldString/NewString/g'
-sed 's/OldString/NewString/g' input.txt
-echo 'hi!' | sed 's/.$//'     # removes the last char
-echo 'These are 12 34 2140' | sed 's/[0-9]/N/g'
-echo 'hi  there!' | sed -E 's/([a-z]*)[[:space:]]+([a-z]*).*/\1 \2/g'
-```
-
-- `sed` reads one line at a time and if a trailing newline is present, it removes it. When `sed` is done, it re-adds the trailing newline, but only if it was already there.
-- The character after `s` (substitute) defines the delimiter; conventionally it is a slash, but you can take whatever is not in your strings.
-- Without `g` (global), `sed` only replaces the first occurrence on each line (leave the terminating slash because `sed` expects three delimiters).
-- Line range: `N,M` (one-based and `N,$` means `N` to end).
-- We can have any number of `&` (placeholder) in the replacement string.
-- `\1..\9` are the placeholders for the `(..)` matches, use `-E` to not escape `(..)`
-- `-i` edits given file in-place; sed has no case-insensitive matching option!!
-- `-E` is for extended regular expression, for example if needing `+ ? |`
 
 ### POSIX character classes
 
