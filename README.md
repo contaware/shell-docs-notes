@@ -60,6 +60,7 @@ All the documents are licensed under [CC BY-SA 4.0](https://creativecommons.org/
     - [Test for substring](#test-for-substring)
     - [Remove prefix/suffix strings](#remove-prefixsuffix-strings)
     - [tr (operate on character sets)](#tr-operate-on-character-sets)
+    - [POSIX character classes](#posix-character-classes)
   - [Lines](#lines)
     - [Sort lines](#sort-lines)
     - [Count lines](#count-lines)
@@ -72,7 +73,6 @@ All the documents are licensed under [CC BY-SA 4.0](https://creativecommons.org/
     - [User input](#user-input)
     - [Read line by line](#read-line-by-line)
   - [cut](#cut)
-  - [POSIX character classes](#posix-character-classes)
   - [getopts](#getopts)
 
 
@@ -933,6 +933,23 @@ echo "Str" | tr -d 'St'         # delete a set of chars
 echo "Str  Hi" | tr -s ' '      # squeeze chars leaving one occurrence
 ```
 
+#### POSIX character classes
+
+Don't confuse the POSIX character class with what is normally called a "regex character class". `[x-z0-9]` is an example of a "regex character class" which POSIX calls a "bracket expression". `[:digit:]` is a **POSIX character class**, used inside a "bracket expression" like `[x-z[:digit:]]`
+
+In regex use POSIX character classes like:
+
+```bash
+[[:space:]] instead of \s (space, tab, newline, carriage return)
+[[:blank:]] space and tab
+[[:word:]]  instead of \w or [a-zA-Z0-9_]
+[[:alnum:]] instead of [a-zA-Z0-9]
+[[:alpha:]] instead of [a-zA-Z]
+[[:digit:]] instead of \d or [0-9]
+[[:lower:]] instead of [a-z]
+[[:upper:]] instead of [A-Z]
+```
+
 
 ### Lines
 
@@ -1045,24 +1062,6 @@ echo 'Hello World!' | rev | cut -c 2- | rev
 
 - `rev` does not reverse the ending newline.
 - `rev` does not append a newline if it is not present.
-
-
-### POSIX character classes
-
-Don't confuse the POSIX character class with what is normally called a "regex character class". `[x-z0-9]` is an example of a "regex character class" which POSIX calls a "bracket expression". `[:digit:]` is a **POSIX character class**, used inside a "bracket expression" like `[x-z[:digit:]]`
-
-In regex use POSIX character classes like:
-
-```bash
-[[:space:]] instead of \s (space, tab, newline, carriage return)
-[[:blank:]] space and tab
-[[:word:]]  instead of \w or [a-zA-Z0-9_]
-[[:alnum:]] instead of [a-zA-Z0-9]
-[[:alpha:]] instead of [a-zA-Z]
-[[:digit:]] instead of \d or [0-9]
-[[:lower:]] instead of [a-z]
-[[:upper:]] instead of [A-Z]
-```
 
 
 ### getopts
