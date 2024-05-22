@@ -50,6 +50,11 @@ The initialization time is just before any file processing starts.
 - `-perm mode` is true if the file's permissions are exactly `mode` (octal or symbolic).
 - `-perm -mode` is true if all permission bits of `mode` are set for the file (file can have additional permission bits set).
 
+#### User/group
+
+- `-user uname` is true if the file belongs to the user `uname`.
+- `-group gname` is true if the file belongs to the group `gname`.
+
 #### Prune (do not descend directory)
 
 - `-prune` always evaluates as true and it instructs `find` to not descend the current pathname if it is a directory.  
