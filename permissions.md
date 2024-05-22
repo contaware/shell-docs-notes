@@ -11,7 +11,7 @@
 
 - An attempt to list the files in a directory requires read permission for the directory, but not on the files within.
 - Execute permission is needed on a directory to be able to `cd` into it (make a directory the current working directory) and to access the inode (permissions, size, time, ...) of the files within it.
-- An attempt to add a file to a directory, delete a file from a directory or rename a file requires write permission for the directory, but not for the files within. You don't have to be the owner of a file or have write permission on it to rename or delete it, you only need write permission on the directory that contains the file.
+- An attempt to add a file to a directory, delete a file from a directory or rename a file requires write permission for the directory, but not for the files within. You don't have to be the owner of a file or have write permission on it to rename or delete it, you only need write permission on the directory that contains the file. But write permission on the directory is not enough, also execute permission on the directory is needed, that's because any change requires the access to the inode.
 
 
 ## Permissions for user, group, others and special modes
