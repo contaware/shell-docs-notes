@@ -18,9 +18,9 @@
 
 When a process tries to open a file:
 
-1. If the file's owning user is the process's effective UID, then the user permission bits are used.
-2. Otherwise, if the file's owning group is the process's effective GID, then the group permission bits are used.
-3. Otherwise, the others permission bits are used 
+1. If the file's owning user is the process's effective UID, then the `user` permission bits are used.
+2. Otherwise, if the file's owning group is the process's effective GID, then the `group` permission bits are used.
+3. Otherwise, the `others` permission bits are used.
 
 → only one set of `rwx` bits are ever used, `user` takes precedence over `group` which takes precedence over `others`.
 
@@ -42,7 +42,7 @@ chmod 2755 a.sh       # set group ID
 chmod 4755 a.sh       # set user ID
 ```
 
-B. Symbolic mode where +/-/= are to add/remove/assign permissions, commas to separate and `a` is the abbreviation of `ugo` (user+group+others):
+B. Symbolic mode where `+`/`-`/`=` are to add/remove/assign permissions, commas to separate and `a` is the abbreviation of `ugo` (user+group+others):
 
 ```bash
 chmod g=rw,o= file    # add group rw perm and deny access to others
@@ -54,9 +54,9 @@ chmod +t      dir     # add sticky bit
 
 Special modes:
 
-- setuid runs an executable with the privileges of the owner of the file.
-- setgid runs an executable with the privileges of the group of the file.
-- A directory whose sticky bit is set, becomes an append-only directory. A file in a sticky directory may only be deleted by the owner or the superuser (usually applied to /tmp).
+- **setuid** runs an executable with the privileges of the owner of the file.
+- **setgid** runs an executable with the privileges of the group of the file.
+- A directory whose **sticky bit** is set, becomes an append-only directory. A file in a sticky directory may only be deleted by the owner or the superuser (usually applied to /tmp).
 
 
 ## List
