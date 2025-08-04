@@ -940,7 +940,7 @@ Don't confuse the POSIX character class with what is normally called a "regex ch
 In regex use POSIX character classes like:
 
 ```bash
-[[:space:]] instead of \s (space, tab, newline, carriage return)
+[[:space:]] instead of \s (space, tab, line feed, carriage return)
 [[:blank:]] space and tab
 [[:word:]]  instead of \w or [a-zA-Z0-9_]
 [[:alnum:]] instead of [a-zA-Z0-9]
