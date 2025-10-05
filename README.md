@@ -620,10 +620,10 @@ Check files:
 -r file         # check whether readable
 -w file         # check whether writable
 -x file         # check whether it can be executed
--f file         # check whether it's a regular file 
+-f file         # check whether it's an existing regular file 
 -s file         # check whether size greater than 0
--d file         # check whether it's a directory
--e file         # check existence (true even if file is a directory)
+-d file         # check whether it's an existing directory
+-e file         # check existence for regular files and directories
 -t fd           # check whether file descriptor number is open and is 
                 # associated with a terminal
 ```
