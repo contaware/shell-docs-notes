@@ -922,6 +922,23 @@ nosuffix=${var%%word}    # remove largest suffix match
 
 - Hint: place `word` in quotes to prevent glob characters in it from being used to match the content of `var`
 
+Examples for manipulating paths:
+
+```bash
+fn=${1##*/}              # file name from path in $1
+fn_noext=${fn%%.*}       # file name without extension
+case $fn in
+*.* )
+    ext=.${fn#*.}        # file extension with dot
+    ;;
+* )
+    ext=                 # if there is no extension
+    ;;
+esac
+
+mydirpath=${2%/}         # trim trailing slash for $2
+```
+
 #### tr (operate on character sets)
 
 ```bash
