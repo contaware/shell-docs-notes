@@ -20,9 +20,9 @@ find [paths] [expression]
 
 #### Name and type
 
-- `-name 'NAME'` matches the basename of the current pathname. As opposed to shell globbing, `*` and `?` in `'NAME'` can also match names with a leading dot.  
-  Important: avoid the shell globbing by always surrounding the `-name` argument by quotes.
-- `-path 'PATH'` is like `-name` but it must match the current pathname.  
+- `-name 'NAME'` matches the basename of the current pathname according the pattern matching notation. You may have the non-POSIX `-iname` for case-insensitive matches, if not, use `-name '[Nn][Aa][Mm][Ee]'`. As opposed to shell globbing, `*` and `?` in `'NAME'` can also match names with a leading dot.  
+  Important: avoid shell globbing by always surrounding `NAME` with quotes.
+- `-path 'PATH'` is like `-name` but it must match the current pathname. Also here you may have the non-POSIX `-ipath` for case-insensitive matches.  
   To exclude current directory: `find . ! -path . -type d`  
   To exclude a directory: `find . ! -path '*/dir/*'`
 - `-type f` to match regular files and `-type d` for directories.  
